@@ -14,7 +14,7 @@ class UmkmModel extends Model
     protected $fillable = [
         'id',
         'users_id',
-        'kategori_Umkm_id',
+        'kategori_umkm_id',
         'nama_umkm',
         'nama_pemilik',
         'no_ktp',
@@ -35,7 +35,7 @@ class UmkmModel extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(User::class, 'users_id');
     }
 
     public function statusRisikoUmkm()
