@@ -1,14 +1,24 @@
-    <!--! BEGIN: Vendors JS !-->
-    <script src="{{asset('assets/vendors/js/vendors.min.js')}}"></script>
-    <!-- vendors.min.js {always must need to be top} -->
-    <script src="{{asset('assets/vendors/js/daterangepicker.min.js')}}"></script>
-    <script src="{{asset('assets/vendors/js/apexcharts.min.js')}}"></script>
-    <script src="{{asset('assets/vendors/js/circle-progress.min.js')}}"></script>
-    <!--! END: Vendors JS !-->
-    <!--! BEGIN: Apps Init  !-->
-    <script src="{{asset('assets/js/common-init.min.js')}}"></script>
-    <script src="{{asset('assets/js/dashboard-init.min.js')}}"></script>
-    <!--! END: Apps Init !-->
-    <!--! BEGIN: Theme Customizer  !-->
-    <script src="{{asset('assets/js/theme-customizer-init.min.js')}}"></script>
-    <!--! END: Theme Customizer !-->
+    <script src="{{asset('assets')}}/assets/vendor/libs/jquery/jquery.js"></script>
+    <script src="{{asset('assets')}}/assets/vendor/libs/popper/popper.js"></script>
+    <script src="{{asset('assets')}}/assets/vendor/js/bootstrap.js"></script>
+    <script src="{{asset('assets')}}/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js"></script>
+
+    <script src="{{asset('assets')}}/assets/vendor/js/menu.js"></script>
+    <!-- endbuild -->
+
+    <!-- Vendors JS -->
+    <script src="{{asset('assets')}}/assets/vendor/libs/apex-charts/apexcharts.js"></script>
+
+    <!-- Main JS -->
+    <script src="{{asset('assets')}}/assets/js/main.js"></script>
+
+    <!-- Page JS -->
+    <script src="{{asset('assets')}}/assets/js/dashboards-analytics.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="{{asset('js')}}/helper.js"></script>
+    <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+
+
+    <!-- Place this tag in your head or just before your close body tag. -->
+    <script async defer src="https://buttons.github.io/buttons.js"></script>

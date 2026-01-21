@@ -8,6 +8,10 @@ Route::get('/', function () {
     return view('Pages.dashboard');
 });
 
+Route::get('/kategori', function () {
+    return view('Pages.KategoriUmkm');
+});
+
 Route::prefix('v1')->group(function(){
     Route::prefix('kategori-Umkm')->controller(KategoriUmkmController::class)->group(function (){
         Route::get('/', 'getAllData');
