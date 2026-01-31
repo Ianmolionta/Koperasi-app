@@ -44,7 +44,7 @@ class UmkmRepositories implements UmkmInterface
             $data->tanggal_lahir = $request->tanggal_lahir;
             $data->alamat_pemilik = $request->alamat_pemilik;
             $data->alamat_usaha = $request->alamat_usaha;
-            $data->jenis_umkm = $request->jenis_umkm;
+            $data->jenis_umkm = '-';
             DB::commit();
             $data->save();
             return $this->success($data, 'success', 'suucess create data umkm');

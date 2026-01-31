@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('tb_pengembalian', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->foreignUuid('peminjaman_id')->constrained('tb_peminjaman');
-            $table->integer('jumlah_pengembalian');
+            $table->bigInteger('jumlah_pengembalian');
             $table->date('tanggal_pengembalian');
             $table->timestamps();
         });

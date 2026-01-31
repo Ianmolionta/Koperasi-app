@@ -32,7 +32,6 @@ class UmkmRequest extends FormRequest
             'tanggal_lahir' => 'required',
             'alamat_pemilik' => 'required',
             'alamat_usaha' => 'required',
-            'jenis_umkm' => 'required'
         ];
     }
 
@@ -49,7 +48,6 @@ class UmkmRequest extends FormRequest
             'tanggal_lahir.required' => 'Tanggal Lahir wajib diisi.',
             'alamat_pemilik.required' => 'Alamat Pemilik wajib diisi.',
             'alamat_usaha.required' => 'Alamat Usaha wajib diisi.',
-            'jenis_umkm.required' => 'Jenis UMKM wajib diisi.',
         ];
     }
 

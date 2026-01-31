@@ -40,7 +40,7 @@ class UmkmModel extends Model
 
     public function statusRisikoUmkm()
     {
-        return $this->hasOne(umkmModel::class, 'status_risiko_id');
+        return $this->hasOne(statusRisikoUmkmModel::class, 'umkm_id');
     }
 
     public function aktivitasUmkm()

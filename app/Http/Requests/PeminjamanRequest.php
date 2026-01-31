@@ -25,11 +25,6 @@ class PeminjamanRequest extends FormRequest
     {
         return [
             'jumlah_pinjaman' => 'required',
-            'sisa_pinjaman' => 'required',
-            'tanggal_pengajuan' => 'required',
-            'tanggal_disetujui' => 'required',
-            'batas_pengembalian' => 'required',
-            'status' => 'required',
             'catatan' => 'required'
         ];
     }
@@ -38,11 +33,6 @@ class PeminjamanRequest extends FormRequest
     {
         return [
             'jumlah_pinjaman.required' => 'Jumlah Pinjaman wajib diisi.',
-            'sisa_pinjaman.required' => 'Sisa Pinjaman wajib diisi.',
-            'tanggal_pengajuan.required' => 'Tanggal Pengajuan wajib diisi.',
-            'tanggal_disetujui.required' => 'Tanggal Disetujui wajib diisi.',
-            'batas_pengembalian.required' => 'Batas Pengembalian wajib diisi.',
-            'status.required' => 'Status wajib diisi.',
             'catatan.required' => 'Catatan wajib diisi.',
         ];
     }

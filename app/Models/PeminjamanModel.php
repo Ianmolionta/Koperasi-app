@@ -17,7 +17,7 @@ class PeminjamanModel extends Model
         'jumlah_pinjaman',
         'sisa_pinjaman',
         'tanggal_pengajuan',
-        'tanggal_disetuji',
+        'tanggal_disetujui',
         'batas_pengembalian',
         'status',
         'catatan',
@@ -32,6 +32,6 @@ class PeminjamanModel extends Model
 
     public function pengembalian()
     {
-        return $this->hasOne(PengembalianModel::class, 'pengembalian_id');
+        return $this->hasMany(PengembalianModel::class, 'peminjaman_id', 'id');
     }
 }

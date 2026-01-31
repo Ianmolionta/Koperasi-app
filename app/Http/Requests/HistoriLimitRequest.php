@@ -25,10 +25,6 @@ class HistoriLimitRequest extends FormRequest
     {
         return [
             'limit_sebelumnya' => 'required',
-            'limit_baru' => 'required',
-            'perubahan' => 'required',
-            'alasan' => 'required',
-            'tanggal_berlaku' => 'required'
         ];
     }
 
@@ -36,9 +32,6 @@ class HistoriLimitRequest extends FormRequest
     {
         return [
             'limit_sebelumnya.required' => 'Limit Sebelumnya wajib diisi.',
-            'limit_baru.required' => 'Limit Baru wajib diisi.',
-            'perubahan.required' => 'Perubahan wajib diisi.',
-            'tanggal_berlaku.required' => 'Tanggal Berlaku wajib diisi.'
         ];
     }
 

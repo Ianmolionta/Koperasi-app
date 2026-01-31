@@ -1,6 +1,7 @@
 @extends('Layouts.Base')
 @section('content')
-    <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">Menu /</span> Kategori UMKM</h4>
+    <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light"> <i class="menu-icon tf-icons bx bx-purchase-tag"></i></span>
+        Kategori UMKM</h4>
     <div class="card">
         <div class="card-header d-flex align-items-center justify-content-between">
             <h5 class="mb-0">Data Kategori UMKM</h5>
@@ -48,6 +49,7 @@
                                         <label for="nama_kategori" class="form-label">Nama Kategori</label>
                                         <input type="text" id="nama_kategori" name="nama_kategori" class="form-control"
                                             placeholder="Masukan Nama Kategori" />
+                                        <small class="text-danger" id="nama_kategori-error"></small>
                                     </div>
                                 </div>
                             </form>
@@ -67,6 +69,39 @@
 @section('script')
     <script>
         $(document).ready(function() {
+            // Konfigurasi jQuery Validation
+            $.validator.setDefaults({
+                errorElement: 'small',
+                errorClass: 'text-danger',
+                highlight: function(element) {
+                    $(element).addClass('is-invalid');
+                },
+                unhighlight: function(element) {
+                    $(element).removeClass('is-invalid');
+                },
+                errorPlacement: function(error, element) {
+                    error.insertAfter(element);
+                }
+            });
+
+            // Inisialisasi validasi form
+            $("#upsertDataForm").validate({
+                rules: {
+                    nama_kategori: {
+                        required: true,
+                        minlength: 3,
+                        maxlength: 255
+                    }
+                },
+                messages: {
+                    nama_kategori: {
+                        required: "Nama Kategori wajib diisi",
+                        minlength: "Nama Kategori minimal 3 karakter",
+                        maxlength: "Nama Kategori maksimal 255 karakter"
+                    }
+                }
+            });
+
             function getData() {
                 $.ajax({
                     url: '/v1/kategori-Umkm',
@@ -84,7 +119,6 @@
 
                         // Cek apakah data kosong atau tidak ada
                         if (!response.data || response.data.length === 0) {
-                            // Jangan tampilkan pesan di tbody, biarkan DataTable yang handle
                             $("#table tbody").html('');
 
                             // Initialize DataTable untuk data kosong
@@ -100,14 +134,14 @@
                                     search: "Pencarian:",
                                     lengthMenu: "Tampilkan _MENU_ data per halaman",
                                     zeroRecords: `
-                            <div class="text-center py-4">
-                                <div class="mb-3">
-                                    <i class="bx bx-data bx-lg text-muted"></i>
-                                </div>
-                                <h6 class="text-muted">Data Tidak Tersedia</h6>
-                                <p class="text-muted small mb-0">Belum ada data kategori yang ditambahkan</p>
-                            </div>
-                        `,
+                                        <div class="text-center py-4">
+                                            <div class="mb-3">
+                                                <i class="bx bx-data bx-lg text-muted"></i>
+                                            </div>
+                                            <h6 class="text-muted">Data Tidak Tersedia</h6>
+                                            <p class="text-muted small mb-0">Belum ada data kategori yang ditambahkan</p>
+                                        </div>
+                                    `,
                                     info: "Menampilkan halaman _PAGE_ dari _PAGES_",
                                     infoEmpty: "Tidak ada data yang tersedia",
                                     infoFiltered: "(difilter dari _MAX_ total data)",
@@ -118,14 +152,14 @@
                                         previous: "Sebelumnya"
                                     },
                                     emptyTable: `
-                            <div class="text-center py-4">
-                                <div class="mb-3">
-                                    <i class="bx bx-data bx-lg text-muted"></i>
-                                </div>
-                                <h6 class="text-muted">Data Tidak Tersedia</h6>
-                                <p class="text-muted small mb-0">Belum ada data kategori yang ditambahkan</p>
-                            </div>
-                        `
+                                        <div class="text-center py-4">
+                                            <div class="mb-3">
+                                                <i class="bx bx-data bx-lg text-muted"></i>
+                                            </div>
+                                            <h6 class="text-muted">Data Tidak Tersedia</h6>
+                                            <p class="text-muted small mb-0">Belum ada data kategori yang ditambahkan</p>
+                                        </div>
+                                    `
                                 },
                                 columnDefs: [{
                                         width: "10%",
@@ -163,10 +197,12 @@
                             tableBody += "<td class='text-center'>";
                             tableBody +=
                                 "<button type='button' class='btn btn-outline-primary btn-sm edit-btn me-1' data-id='" +
-                                item.id + "'><i class='bx bx-pencil'></i></button>";
+                                item.id +
+                                "' title='Edit'><i class='bx bx-pencil'></i></button>";
                             tableBody +=
                                 "<button type='button' class='btn btn-outline-danger btn-sm delete-confirm' data-id='" +
-                                item.id + "'><i class='bx bx-trash'></i></button>";
+                                item.id +
+                                "' title='Hapus'><i class='bx bx-trash'></i></button>";
                             tableBody += "</td>";
 
                             tableBody += "</tr>";
@@ -187,14 +223,14 @@
                                 search: "Pencarian:",
                                 lengthMenu: "Tampilkan _MENU_ data per halaman",
                                 zeroRecords: `
-                        <div class="text-center py-4">
-                            <div class="mb-3">
-                                <i class="bx bx-data bx-lg text-muted"></i>
-                            </div>
-                            <h6 class="text-muted">Data Tidak Ditemukan</h6>
-                            <p class="text-muted small mb-0">Tidak ada data yang sesuai dengan pencarian Anda</p>
-                        </div>
-                    `,
+                                    <div class="text-center py-4">
+                                        <div class="mb-3">
+                                            <i class="bx bx-data bx-lg text-muted"></i>
+                                        </div>
+                                        <h6 class="text-muted">Data Tidak Ditemukan</h6>
+                                        <p class="text-muted small mb-0">Tidak ada data yang sesuai dengan pencarian Anda</p>
+                                    </div>
+                                `,
                                 info: "Menampilkan halaman _PAGE_ dari _PAGES_",
                                 infoEmpty: "Tidak ada data yang tersedia",
                                 infoFiltered: "(difilter dari _MAX_ total data)",
@@ -205,14 +241,14 @@
                                     previous: "Sebelumnya"
                                 },
                                 emptyTable: `
-                        <div class="text-center py-4">
-                            <div class="mb-3">
-                                <i class="bx bx-data bx-lg text-muted"></i>
-                            </div>
-                            <h6 class="text-muted">Data Tidak Tersedia</h6>
-                            <p class="text-muted small mb-0">Belum ada data kategori yang ditambahkan</p>
-                        </div>
-                    `
+                                    <div class="text-center py-4">
+                                        <div class="mb-3">
+                                            <i class="bx bx-data bx-lg text-muted"></i>
+                                        </div>
+                                        <h6 class="text-muted">Data Tidak Tersedia</h6>
+                                        <p class="text-muted small mb-0">Belum ada data kategori yang ditambahkan</p>
+                                    </div>
+                                `
                             },
                             columnDefs: [{
                                     width: "10%",
@@ -246,7 +282,6 @@
                             $('#table').DataTable().destroy();
                         }
 
-                        // Kosongkan tbody
                         $("#table tbody").html('');
 
                         // Initialize DataTable dengan pesan error
@@ -262,14 +297,14 @@
                                 search: "Pencarian:",
                                 lengthMenu: "Tampilkan _MENU_ data per halaman",
                                 emptyTable: `
-                        <div class="text-center py-4">
-                            <div class="mb-3">
-                                <i class="bx bx-error-circle bx-lg text-danger"></i>
-                            </div>
-                            <h6 class="text-danger">Gagal Memuat Data</h6>
-                            <p class="text-muted small mb-0">Terjadi kesalahan saat mengambil data dari server</p>
-                        </div>
-                    `,
+                                    <div class="text-center py-4">
+                                        <div class="mb-3">
+                                            <i class="bx bx-error-circle bx-lg text-danger"></i>
+                                        </div>
+                                        <h6 class="text-danger">Gagal Memuat Data</h6>
+                                        <p class="text-muted small mb-0">Terjadi kesalahan saat mengambil data dari server</p>
+                                    </div>
+                                `,
                                 info: "Menampilkan halaman _PAGE_ dari _PAGES_",
                                 infoEmpty: "Tidak ada data yang tersedia",
                                 paginate: {
@@ -307,16 +342,19 @@
             }
             getData();
 
+            // Event handler untuk simpan data
             $(document).on('click', '#simpanData', function(e) {
-                $('.text-danger').text('');
                 e.preventDefault();
+
+                // Validasi form menggunakan jQuery Validation
+                if (!$("#upsertDataForm").valid()) {
+                    return false;
+                }
 
                 let id = $('#id').val();
                 let formData = new FormData($('#upsertDataForm')[0]);
                 let url = id ? `/v1/kategori-Umkm/update/${id}` : '/v1/kategori-Umkm/create';
-                let method = id ? 'POST' : 'POST';
-
-                // loadingAllert();
+                let method = 'POST';
 
                 $.ajax({
                     type: method,
@@ -326,11 +364,15 @@
                     processData: false,
                     success: function(response) {
                         console.log(response);
-                        Swal.close();
+
                         if (response.code === 422) {
                             let errors = response.errors;
                             $.each(errors, function(key, value) {
-                                $('#' + key + '-error').text(value[0]);
+                                // Tampilkan error dari server jika ada
+                                let $element = $('[name="' + key + '"]');
+                                $element.addClass('is-invalid');
+                                $element.after('<small class="text-danger">' + value[
+                                    0] + '</small>');
                             });
                         } else if (response.status === 'success') {
                             // Tutup modal sebelum menampilkan alert
@@ -348,12 +390,12 @@
                     },
                     error: function(xhr, status, error) {
                         console.error(xhr.responseText);
-                        Swal.close();
                         alertError();
                     }
                 });
             });
 
+            // Event handler untuk edit
             $(document).on('click', '.edit-btn', function() {
                 let id = $(this).data('id');
                 $.ajax({
@@ -361,15 +403,21 @@
                     method: "GET",
                     dataType: "json",
                     success: function(response) {
-                        console.log(typeof bootstrap);
                         const modalEl = document.getElementById('basicModal');
                         const modal = new bootstrap.Modal(modalEl);
+
+                        // Ubah judul modal
+                        $('#exampleModalLabel1').text('Edit Kategori UMKM');
 
                         modal.show();
 
                         // Populate form fields with existing data
                         $('#id').val(response.data.id);
                         $('#nama_kategori').val(response.data.nama_kategori);
+
+                        // Reset validasi setelah populate data
+                        $("#upsertDataForm").validate().resetForm();
+                        $('.is-invalid').removeClass('is-invalid');
                     },
                     error: function(xhr, status, error) {
                         console.error('Error fetching data for edit:', error);
@@ -377,6 +425,7 @@
                 });
             });
 
+            // Fungsi untuk delete data
             function deleteDataById(id) {
                 if (!id) {
                     console.error('ID tidak valid');
@@ -398,10 +447,12 @@
                     },
                     error: function(xhr) {
                         console.error(xhr.responseText);
+                        alertError();
                     }
                 });
             }
 
+            // Event handler untuk delete
             $(document).on('click', '.delete-confirm', function() {
                 const id = $(this).data('id');
 
@@ -417,9 +468,21 @@
             $('#basicModal').on('hidden.bs.modal', function() {
                 $('#upsertDataForm')[0].reset();
                 $('#id').val('');
-                $('.text-danger').text('');
+                $('#exampleModalLabel1').text('Tambah Kategori UMKM');
+
+                // Reset validasi jQuery
+                $("#upsertDataForm").validate().resetForm();
+                $('.is-invalid').removeClass('is-invalid');
+                $('.text-danger').remove();
             });
 
+            // Reset modal ketika dibuka untuk tambah data
+            $('#basicModal').on('show.bs.modal', function(e) {
+                // Cek apakah ini bukan dari tombol edit
+                if (!$(e.relatedTarget).hasClass('edit-btn')) {
+                    $('#exampleModalLabel1').text('Tambah Kategori UMKM');
+                }
+            });
         })
     </script>
 
@@ -427,6 +490,22 @@
         /* Fix untuk navbar tetap gelap saat SweetAlert muncul */
         .swal2-container {
             z-index: 10000 !important;
+        }
+
+        /* Style untuk field yang invalid */
+        .is-invalid {
+            border-color: #dc3545 !important;
+            padding-right: calc(1.5em + 0.75rem);
+            background-repeat: no-repeat;
+            background-position: right calc(0.375em + 0.1875rem) center;
+            background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+        }
+
+        /* Style untuk pesan error */
+        small.text-danger {
+            display: block;
+            margin-top: 0.25rem;
+            font-size: 0.875rem;
         }
     </style>
 @endsection

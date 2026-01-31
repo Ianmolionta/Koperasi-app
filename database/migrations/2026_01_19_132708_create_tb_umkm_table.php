@@ -23,7 +23,7 @@ return new class extends Migration
             $table->date('tanggal_lahir');
             $table->string('alamat_pemilik');
             $table->string('alamat_usaha');
-            $table->enum('jenis_umkm', ['kelas1', 'kelas2', 'kelas3']);
+            $table->string('jenis_umkm')->nullable();
             $table->timestamps();
         });
     }
