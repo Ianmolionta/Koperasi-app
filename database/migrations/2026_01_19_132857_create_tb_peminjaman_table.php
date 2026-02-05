@@ -14,13 +14,13 @@ return new class extends Migration
         Schema::create('tb_peminjaman', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->foreignUuid('umkm_id')->constrained('tb_umkm');
-            $table->integer('jumlah_pinjaman');
-            $table->integer('sisa_pinjaman');
+            $table->bigInteger('jumlah_pinjaman');
+            $table->bigInteger('sisa_pinjaman');
             $table->date('tanggal_pengajuan');
-            $table->date('tanggal_disetujui');
-            $table->date('batas_pengembalian');
-            $table->enum('status', ['pending', 'disetujui', 'ditolak', 'lunas']);
-            $table->text('catatan');
+            $table->date('tanggal_disetujui')->nullable();
+            $table->date('batas_pengembalian')->nullable();
+            $table->enum('status', ['pending', 'disetujui', 'ditolak', 'lunas'])->default('pending');
+            $table->text('catatan')->nullable();
             $table->timestamps();
         });
     }

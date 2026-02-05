@@ -3,6 +3,7 @@
 namespace App\Interfaces;
 
 use App\Http\Requests\PeminjamanRequest;
+use Illuminate\Http\Request;
 
 interface PeminjamanInterface
 {
@@ -11,4 +12,6 @@ interface PeminjamanInterface
     public function getDataById($id);
     public function updateData(PeminjamanRequest $request, $id);
     public function deleteData($id);
+    public function approvePinjaman(Request $request, $id);
+    public function getDetail($id);
 }

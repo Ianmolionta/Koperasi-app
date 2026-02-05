@@ -20,7 +20,7 @@ trait HttpResponTrait
         return response()->json([
             'status' => $status,
             'message' => $message
-        ], 404);
+        ], 200);
     }
 
     protected function delete($status = "success", $message = 'Success delete', $code = 200)

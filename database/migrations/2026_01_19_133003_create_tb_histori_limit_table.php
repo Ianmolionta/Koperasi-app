@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('tb_histori_limit', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->foreignUuid('umkm_id')->constrained('tb_umkm');
-            $table->integer('limit_sebelumnya');
-            $table->integer('limit_baru');
+            $table->bigInteger('limit_sebelumnya');
+            $table->bigInteger('limit_baru');
             $table->enum('perubahan', ['naik', 'turun', 'tetap']);
             $table->text('alasan');
             $table->date('tanggal_berlaku');

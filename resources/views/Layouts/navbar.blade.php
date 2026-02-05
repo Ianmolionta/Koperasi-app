@@ -1,96 +1,86 @@
-    <nav class="navbar col-lg-12 col-12 p-0 fixed-top d-flex flex-row">
-        <div class="text-center navbar-brand-wrapper d-flex align-items-center justify-content-center">
-            <a class="navbar-brand brand-logo mr-5" href="index.html"><img src="{{asset('assets')}}/images/logo.png" class="mr-2"
-                    alt="logo" /></a>
-            <a class="navbar-brand brand-logo-mini" href="index.html"><img src="{{asset('assets')}}/images/logo-2.png" alt="logo" /></a>
-        </div>
-        <div class="navbar-menu-wrapper d-flex align-items-center justify-content-end">
-            <button class="navbar-toggler navbar-toggler align-self-center" type="button" data-toggle="minimize">
-                <span class="icon-menu"></span>
-            </button>
-            <ul class="navbar-nav mr-lg-2">
-            </ul>
-            <ul class="navbar-nav navbar-nav-right">
-                <li class="nav-item nav-search d-none d-lg-block">
-                    <div class="input-group">
-                        <div class="input-group-prepend hover-cursor" id="navbar-search-icon">
-                            <span class="input-group-text" id="search">
-                                <i class="icon-search"></i>
-                            </span>
-                        </div>
-                        <input type="text" class="form-control" id="navbar-search-input" placeholder="Search now"
-                            aria-label="search" aria-describedby="search">
-                    </div>
-                </li>
-                <li class="nav-item dropdown">
-                    <a class="nav-link count-indicator dropdown-toggle" id="notificationDropdown" href="#"
-                        data-toggle="dropdown">
-                        <i class="icon-bell mx-0"></i>
-                        <span class="count"></span>
-                    </a>
-                    <div class="dropdown-menu dropdown-menu-right navbar-dropdown preview-list"
-                        aria-labelledby="notificationDropdown">
-                        <p class="mb-0 font-weight-normal float-left dropdown-header">Notifications</p>
-                        <a class="dropdown-item preview-item">
-                            <div class="preview-thumbnail">
-                                <div class="preview-icon bg-success">
-                                    <i class="ti-info-alt mx-0"></i>
-                                </div>
-                            </div>
-                            <div class="preview-item-content">
-                                <h6 class="preview-subject font-weight-normal">Application Error</h6>
-                                <p class="font-weight-light small-text mb-0 text-muted">
-                                    Just now
-                                </p>
-                            </div>
-                        </a>
-                        <a class="dropdown-item preview-item">
-                            <div class="preview-thumbnail">
-                                <div class="preview-icon bg-warning">
-                                    <i class="ti-settings mx-0"></i>
-                                </div>
-                            </div>
-                            <div class="preview-item-content">
-                                <h6 class="preview-subject font-weight-normal">Settings</h6>
-                                <p class="font-weight-light small-text mb-0 text-muted">
-                                    Private message
-                                </p>
-                            </div>
-                        </a>
-                        <a class="dropdown-item preview-item">
-                            <div class="preview-thumbnail">
-                                <div class="preview-icon bg-info">
-                                    <i class="ti-user mx-0"></i>
-                                </div>
-                            </div>
-                            <div class="preview-item-content">
-                                <h6 class="preview-subject font-weight-normal">New user registration</h6>
-                                <p class="font-weight-light small-text mb-0 text-muted">
-                                    2 days ago
-                                </p>
-                            </div>
-                        </a>
-                    </div>
-                </li>
-                <li class="nav-item nav-profile dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown" id="profileDropdown">
-                        <img src="{{asset('assets')}}/images/faces/face28.jpg" alt="profile" />
-                    </a>
-                    <div class="dropdown-menu dropdown-menu-right navbar-dropdown" aria-labelledby="profileDropdown">
-                        <a class="dropdown-item">
-                            <i class="ti-settings text-primary"></i>
-                            Settings
-                        </a>
-                        <a class="dropdown-item">
-                            <i class="ti-power-off text-primary"></i>
-                            Logout
-                        </a>
-                    </div>
-                </li>
-            </ul>
-            <button class="navbar-toggler navbar-toggler-right d-lg-none align-self-center" type="button"
-                data-toggle="offcanvas">
-                <span class="icon-menu"></span>
-            </button>
-        </div>
-    </nav>
+          <nav class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme"
+              id="layout-navbar">
+              <div class="layout-menu-toggle navbar-nav align-items-xl-center me-3 me-xl-0 d-xl-none">
+                  <a class="nav-item nav-link px-0 me-xl-4" href="javascript:void(0)">
+                      <i class="bx bx-menu bx-sm"></i>
+                  </a>
+              </div>
+
+              <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
+                  <!-- Search -->
+                  <div class="navbar-nav align-items-center">
+                      <div class="nav-item d-flex align-items-center">
+                          <i class="bx bx-search fs-4 lh-0"></i>
+                          <input type="text" class="form-control border-0 shadow-none" placeholder="Search..."
+                              aria-label="Search..." />
+                      </div>
+                  </div>
+                  <!-- /Search -->
+
+                  <ul class="navbar-nav flex-row align-items-center ms-auto">
+                      <!-- User -->
+                      <li class="nav-item navbar-dropdown dropdown-user dropdown">
+                          <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);"
+                              data-bs-toggle="dropdown">
+                              <div class="avatar avatar-online">
+                                  <img src="{{ asset('assets') }}/assets/img/avatars/1.png" alt
+                                      class="w-px-40 h-auto rounded-circle" />
+                              </div>
+                          </a>
+                          <ul class="dropdown-menu dropdown-menu-end">
+                              <li>
+                                  <a class="dropdown-item" href="#">
+                                      <div class="d-flex">
+                                          <div class="flex-shrink-0 me-3">
+                                              <div class="avatar avatar-online">
+                                                  <img src="{{ asset('assets') }}/assets/img/avatars/1.png" alt
+                                                      class="w-px-40 h-auto rounded-circle" />
+                                              </div>
+                                          </div>
+                                          <div class="flex-grow-1">
+                                              <span class="fw-semibold d-block">John Doe</span>
+                                              <small class="text-muted">Admin</small>
+                                          </div>
+                                      </div>
+                                  </a>
+                              </li>
+                              <li>
+                                  <div class="dropdown-divider"></div>
+                              </li>
+                              <li>
+                                  <a class="dropdown-item" href="#">
+                                      <i class="bx bx-user me-2"></i>
+                                      <span class="align-middle">My Profile</span>
+                                  </a>
+                              </li>
+                              <li>
+                                  <a class="dropdown-item" href="#">
+                                      <i class="bx bx-cog me-2"></i>
+                                      <span class="align-middle">Settings</span>
+                                  </a>
+                              </li>
+                              <li>
+                                  <a class="dropdown-item" href="#">
+                                      <span class="d-flex align-items-center align-middle">
+                                          <i class="flex-shrink-0 bx bx-credit-card me-2"></i>
+                                          <span class="flex-grow-1 align-middle">Billing</span>
+                                          <span
+                                              class="flex-shrink-0 badge badge-center rounded-pill bg-danger w-px-20 h-px-20">4</span>
+                                      </span>
+                                  </a>
+                              </li>
+                              <li>
+                                  <div class="dropdown-divider"></div>
+                              </li>
+                              <li>
+                                  <a class="dropdown-item" href="javascript:void(0);" id="logoutBtn">
+                                      <i class="bx bx-power-off me-2"></i>
+                                      <span class="align-middle">Log Out</span>
+                                  </a>
+                              </li>
+                          </ul>
+                      </li>
+                      <!--/ User -->
+                  </ul>
+              </div>
+          </nav>

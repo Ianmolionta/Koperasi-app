@@ -31,7 +31,7 @@ class KategoriUmkmRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'nama_kategori.required' => 'nama_kategori wajib diisi.',
+            'nama_kategori.required' => 'Nama Kategori wajib diisi.',
         ];
     }
 

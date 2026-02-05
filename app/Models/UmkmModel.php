@@ -14,7 +14,7 @@ class UmkmModel extends Model
     protected $fillable = [
         'id',
         'users_id',
-        'kategori_Umkm_id',
+        'kategori_umkm_id',
         'nama_umkm',
         'nama_pemilik',
         'no_ktp',
@@ -35,12 +35,12 @@ class UmkmModel extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(User::class, 'users_id');
     }
 
     public function statusRisikoUmkm()
     {
-        return $this->hasOne(umkmModel::class, 'status_risiko_id');
+        return $this->hasOne(statusRisikoUmkmModel::class, 'umkm_id');
     }
 
     public function aktivitasUmkm()
@@ -50,11 +50,16 @@ class UmkmModel extends Model
 
     public function historiLimit()
     {
-        return $this->hasOne(HistoriLimitModel::class, 'histori_limit_id');
+        return $this->hasOne(HistoriLimitModel::class, 'umkm_id');
     }
 
     public function peminjaman()
     {
         return $this->hasOne(PeminjamanModel::class, 'peminjaman_id');
+    }
+
+    public function limit()
+    {
+        return $this->hasOne(LimitModel::class, 'umkm_id', 'id');
     }
 }

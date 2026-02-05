@@ -25,7 +25,6 @@ class PengembalianRequest extends FormRequest
     {
         return [
             'jumlah_pengembalian' => 'required',
-            'tanggal_pengembalian' => 'required'
         ];
     }
 
@@ -33,7 +32,6 @@ class PengembalianRequest extends FormRequest
     {
         return [
             'jumlah_pengembalian.required' => 'Jumlah Pengembalian wajib diisi.',
-            'tanggal_pengembalian.required' => 'Tanggal Pengembalian wajib diisi.',
         ];
     }
 
