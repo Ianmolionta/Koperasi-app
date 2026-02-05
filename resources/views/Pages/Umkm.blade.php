@@ -116,8 +116,12 @@
                             <div class="col-md-6 mb-3">
                                 <label for="jenis_umkm" class="form-label">Jenis UMKM <span
                                         class="text-danger">*</span></label>
-                                <input type="text" id="jenis_umkm" name="jenis_umkm" class="form-control"
-                                    placeholder="Masukan Jenis UMKM" />
+                                <select id="jenis_umkm" name="jenis_umkm" class="form-select">
+                                    <option value="">Pilih Kategori UMKM</option>
+                                    <option value="Mikro">Mikro</option>
+                                    <option value="Kecil">Kecil</option>
+                                    <option value="Menengah">Menengah</option>
+                                </select>
                                 <small class="text-danger" id="jenis_umkm-error"></small>
                             </div>
                             <div class="col-md-6 mb-3">
@@ -160,8 +164,7 @@
                     <h5 class="modal-title text-white">
                         <i class="bx bx-detail me-2"></i>Detail UMKM
                     </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                        aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="row">
@@ -346,28 +349,17 @@
                 }
             });
 
+            const currentUser = {
+                id: "{{ auth()->user()->id ?? '' }}", // Tambahkan tanda petik di sini
+                nama: "{{ auth()->user()->nama ?? '' }}"
+            };
+
             // Fungsi untuk mendapatkan data user yang sedang login
             function getCurrentUser() {
-                $.ajax({
-                    url: '/v1/users/',
-                    type: 'GET',
-                    dataType: 'json',
-                    success: function(response) {
-                        console.log(response);
-
-                        if (response.data && Array.isArray(response.data) && response.data.length > 0) {
-                            const user = response.data[0];
-                            $('#users_name').val(user.nama ?? '');
-                            $('#users_id').val(user.id ?? '');
-                        } else {
-                            console.error('Data user tidak ditemukan');
-                        }
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('Error fetching current user:', error);
-                        console.error('XHR:', xhr);
-                    }
-                });
+                if (currentUser.id && currentUser.nama) {
+                    $('#users_id').val(currentUser.id);
+                    $('#users_name').val(currentUser.nama);
+                }
             }
 
             // Fungsi untuk mengambil data kategori UMKM

@@ -34,89 +34,165 @@ class PengembalianRepositories implements PengembalianInterface
 
     public function createData($request)
     {
+        DB::beginTransaction();
+
         try {
-            DB::beginTransaction();
 
-            // 1. Simpan pengembalian
-            $data = new $this->PengembalianModel;
-            $data->peminjaman_id = $request->peminjaman_id;
-            $data->jumlah_pengembalian = $request->jumlah_pengembalian;
-            $data->tanggal_pengembalian = $request->tanggal_pengembalian;
-            $data->save();
-
-            // 2. Ambil peminjaman
+            /**
+             * 1. Ambil peminjaman + lock
+             */
             $peminjaman = $this->PeminjamanModel
                 ->lockForUpdate()
-                ->find($data->peminjaman_id);
+                ->find($request->peminjaman_id);
 
             if (! $peminjaman) {
                 throw new \Exception('Data peminjaman tidak ditemukan');
             }
 
-            // 3. Kurangi sisa pinjaman
-            $peminjaman->sisa_pinjaman -= $data->jumlah_pengembalian;
+            if ($peminjaman->status === 'lunas') {
+                throw new \Exception('Pinjaman sudah lunas');
+            }
+
+            /**
+             * 2. Validasi: hanya 1 pengembalian per bulan
+             */
+            $tanggalBayar = Carbon::parse($request->tanggal_pengembalian);
+
+            $sudahBayarBulanIni = $this->PengembalianModel
+                ->where('peminjaman_id', $peminjaman->id)
+                ->whereMonth('tanggal_pengembalian', $tanggalBayar->month)
+                ->whereYear('tanggal_pengembalian', $tanggalBayar->year)
+                ->exists();
+
+            if ($sudahBayarBulanIni) {
+                throw new \Exception(
+                    'Pengembalian hanya dapat dilakukan satu kali dalam satu bulan'
+                );
+            }
+
+            /**
+             * 3. Validasi bunga maksimal 2% (kecuali lunas)
+             */
+            $jumlahBayar = (int) $request->jumlah_pengembalian;
+            $sisaPinjaman = (int) $peminjaman->sisa_pinjaman;
+            $bungaMaksimal = (int) ($peminjaman->jumlah_pinjaman * 0.02);
+
+            $akanLunas = ($jumlahBayar >= $sisaPinjaman);
+
+            if (! $akanLunas) {
+                $minimalSisa = $sisaPinjaman - $bungaMaksimal;
+
+                if ($jumlahBayar > $minimalSisa) {
+                    throw new \Exception(
+                        'Jumlah pembayaran melebihi batas bunga 2% per bulan'
+                    );
+                }
+            }
+
+            /**
+             * 4. Simpan pengembalian
+             */
+            $pengembalian = new $this->PengembalianModel;
+            $pengembalian->peminjaman_id = $peminjaman->id;
+            $pengembalian->jumlah_pengembalian = $jumlahBayar;
+            $pengembalian->tanggal_pengembalian = $tanggalBayar;
+            $pengembalian->save();
+
+            /**
+             * 5. Update sisa pinjaman
+             */
+            $peminjaman->sisa_pinjaman -= $jumlahBayar;
 
             if ($peminjaman->sisa_pinjaman < 0) {
                 throw new \Exception('Jumlah pengembalian melebihi sisa pinjaman');
             }
 
-            // 4. Hitung keterlambatan
+            /**
+             * 6. Hitung keterlambatan
+             */
             $batas = Carbon::parse($peminjaman->batas_pengembalian);
-            $tanggalPengembalian = Carbon::parse($data->tanggal_pengembalian);
-            $hariTerlambat = $batas->diffInDays($tanggalPengembalian, false);
+            $hariTerlambat = $batas->diffInDays($tanggalBayar, false);
 
-            // 5. Tentukan limit & risiko
-            $limitSebelumnya = $peminjaman->jumlah_pinjaman;
-            $limitBaru = $limitSebelumnya;
-            $perubahan = 'tetap';
-            $statusRisiko = null;
+            /**
+             * 7. Hitung bunga bulan ini
+             */
+            $bungaBulanIni = 0;
 
-            if ($hariTerlambat < 0) {
-                // Lebih cepat
-                $limitBaru = $limitSebelumnya * 1.10;
-                $perubahan = 'naik';
-            } elseif ($hariTerlambat > 60) {
-                $limitBaru = $limitSebelumnya * 0.90;
-                $perubahan = 'turun';
-                $statusRisiko = 'merah';
-            } elseif ($hariTerlambat > 30) {
-                $limitBaru = $limitSebelumnya * 0.90;
-                $perubahan = 'turun';
-                $statusRisiko = 'kuning';
+            if ((int) $peminjaman->sisa_pinjaman > 0) {
+                $bungaBulanIni = $bungaMaksimal;
             }
 
-            // 6. Jika lunas
-            if ((int) $peminjaman->sisa_pinjaman === 0) {
-                $peminjaman->status = 'lunas';
-            }
-
-            $peminjaman->save();
-
-            // 7. Simpan histori limit (SETIAP pengembalian)
+            /**
+             * 8. Histori limit BULANAN (WAJIB SETIAP BAYAR)
+             */
             HistoriLimitModel::create([
                 'umkm_id' => $peminjaman->umkm_id,
-                'limit_sebelumnya' => $limitSebelumnya,
-                'limit_baru' => (int) $limitBaru,
-                'perubahan' => $perubahan,
-                'alasan' => 'Evaluasi otomatis saat pengembalian',
+                'limit_sebelumnya' => $peminjaman->jumlah_pinjaman,
+                'limit_baru' => $peminjaman->jumlah_pinjaman,
+                'perubahan' => 'tetap',
+                'total_bunga' => $bungaBulanIni,
+                'alasan' => 'Pengembalian bulanan',
                 'tanggal_berlaku' => now(),
             ]);
 
-            // 8. Update / simpan status risiko
-            if ($statusRisiko) {
-                StatusRisikoUmkmModel::updateOrCreate(
-                    ['umkm_id' => $peminjaman->umkm_id],
-                    [
-                        'status' => $statusRisiko,
-                        'hari_keterlambatan' => max(0, $hariTerlambat),
-                        'tanggal_penetapan' => now(),
-                    ]
-                );
+            /**
+             * 9. Jika pinjaman LUNAS → evaluasi limit
+             */
+            if ((int) $peminjaman->sisa_pinjaman === 0) {
+
+                $limitSebelumnya = $peminjaman->jumlah_pinjaman;
+                $limitBaru = $limitSebelumnya;
+                $perubahan = 'tetap';
+                $statusRisiko = null;
+
+                if ($hariTerlambat < 0) {
+                    $limitBaru = $limitSebelumnya * 1.10;
+                    $perubahan = 'naik';
+                } elseif ($hariTerlambat > 60) {
+                    $limitBaru = $limitSebelumnya * 0.90;
+                    $perubahan = 'turun';
+                    $statusRisiko = 'merah';
+                } elseif ($hariTerlambat > 30) {
+                    $limitBaru = $limitSebelumnya * 0.90;
+                    $perubahan = 'turun';
+                    $statusRisiko = 'kuning';
+                }
+
+                // Update status pinjaman
+                $peminjaman->status = 'lunas';
+
+                // Histori limit KHUSUS pelunasan
+                HistoriLimitModel::create([
+                    'umkm_id' => $peminjaman->umkm_id,
+                    'limit_sebelumnya' => $limitSebelumnya,
+                    'limit_baru' => (int) $limitBaru,
+                    'perubahan' => $perubahan,
+                    'total_bunga' => 0,
+                    'alasan' => 'Evaluasi limit saat pelunasan',
+                    'tanggal_berlaku' => now(),
+                ]);
+
+                // Status risiko UMKM
+                if ($statusRisiko) {
+                    StatusRisikoUmkmModel::updateOrCreate(
+                        ['umkm_id' => $peminjaman->umkm_id],
+                        [
+                            'status' => $statusRisiko,
+                            'hari_keterlambatan' => max(0, $hariTerlambat),
+                            'tanggal_penetapan' => now(),
+                        ]
+                    );
+                }
             }
 
+            $peminjaman->save();
             DB::commit();
 
-            return $this->success($data, 'success', 'success create data pengembalian');
+            return $this->success(
+                $pengembalian,
+                'success',
+                'Pengembalian berhasil diproses'
+            );
         } catch (\Throwable $th) {
             DB::rollBack();
             return $this->error($th->getMessage());

@@ -14,11 +14,11 @@ class AktivitasUmkmModel extends Model
     protected $fillable = [
         'id',
         'umkm_id',
-        'user_id',
+        'users_id',
         'periode_catur_wulan',
         'aktivitas',
         'permasalahan',
-        'tanggal_pelaporan',
+        'tanggal_aktivitas',
         'created_at'
     ];
 

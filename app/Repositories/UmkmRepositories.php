@@ -4,10 +4,10 @@ namespace App\Repositories;
 
 use App\Http\Requests\UmkmRequest;
 use App\Interfaces\UmkmInterface;
-use App\Models\KategoriUmkmModel;
+use App\Models\LimitModel;
 use App\Models\UmkmModel;
-use App\Models\User;
 use App\Traits\HttpResponTrait;
+use Illuminate\Container\Attributes\Auth;
 use Illuminate\Support\Facades\DB;
 
 class UmkmRepositories implements UmkmInterface
@@ -15,7 +15,7 @@ class UmkmRepositories implements UmkmInterface
     use HttpResponTrait;
     protected $UmkmModel;
 
-    public function __construct(UmkmModel $umkmModel, KategoriUmkmModel $kategoriModel, User $user)
+    public function __construct(UmkmModel $umkmModel)
     {
         $this->UmkmModel = $umkmModel;
     }
@@ -31,10 +31,12 @@ class UmkmRepositories implements UmkmInterface
 
     public function createData(UmkmRequest $request)
     {
+        DB::beginTransaction();
+
         try {
-            DB::beginTransaction();
+            // 1. Simpan UMKM
             $data = new $this->UmkmModel;
-            $data->users_id = $request->users_id;
+            $data->users_id = auth()->user()->id;
             $data->kategori_umkm_id = $request->kategori_umkm_id;
             $data->nama_umkm = $request->nama_umkm;
             $data->nama_pemilik = $request->nama_pemilik;
@@ -44,15 +46,38 @@ class UmkmRepositories implements UmkmInterface
             $data->tanggal_lahir = $request->tanggal_lahir;
             $data->alamat_pemilik = $request->alamat_pemilik;
             $data->alamat_usaha = $request->alamat_usaha;
-            $data->jenis_umkm = '-';
-            DB::commit();
+            $data->jenis_umkm = $request->jenis_umkm;
             $data->save();
-            return $this->success($data, 'success', 'suucess create data umkm');
+
+            // 2. Tentukan limit berdasarkan jenis UMKM
+            switch ($data->jenis_umkm) {
+                case 'Mikro':
+                    $limitValue = 10_000_000;
+                    break;
+                case 'Kecil':
+                    $limitValue = 50_000_000;
+                    break;
+                case 'Menengah':
+                    $limitValue = 500_000_000;
+                    break;
+                default:
+                    throw new \Exception('Jenis UMKM tidak valid');
+            }
+
+            // 3. Simpan limit UMKM
+            $limit = new LimitModel();
+            $limit->umkm_id = $data->id;
+            $limit->limit = $limitValue;
+            $limit->save();
+
+            DB::commit();
+            return $this->success($data, 'success', 'Berhasil membuat data UMKM');
         } catch (\Throwable $th) {
             DB::rollBack();
             return $this->error($th->getMessage());
         }
     }
+
 
     public function getDataById($id)
     {
@@ -67,13 +92,22 @@ class UmkmRepositories implements UmkmInterface
 
     public function updateData(UmkmRequest $request, $id)
     {
+        DB::beginTransaction();
+
         try {
             $data = $this->UmkmModel->find($id);
-
             if (!$data) {
                 return $this->dataNotFound();
             }
-            DB::beginTransaction();
+
+            /**
+             * 1. Simpan jenis UMKM lama
+             */
+            $jenisLama = $data->jenis_umkm;
+
+            /**
+             * 2. Update data UMKM
+             */
             $data->users_id = $request->users_id;
             $data->kategori_umkm_id = $request->kategori_umkm_id;
             $data->nama_umkm = $request->nama_umkm;
@@ -85,14 +119,52 @@ class UmkmRepositories implements UmkmInterface
             $data->alamat_pemilik = $request->alamat_pemilik;
             $data->alamat_usaha = $request->alamat_usaha;
             $data->jenis_umkm = $request->jenis_umkm;
-            DB::commit();
             $data->save();
-            return $this->success($data, 'success', 'suucess create data umkm');
+
+            /**
+             * 3. Jika jenis UMKM berubah → update limit
+             */
+            if ($jenisLama !== $data->jenis_umkm) {
+
+                switch ($data->jenis_umkm) {
+                    case 'Mikro':
+                        $limitValue = 10_000_000;
+                        break;
+                    case 'Kecil':
+                        $limitValue = 50_000_000;
+                        break;
+                    case 'Menengah':
+                        $limitValue = 500_000_000;
+                        break;
+                    default:
+                        throw new \Exception('Jenis UMKM tidak valid');
+                }
+
+                /**
+                 * 4. UPDATE limit (bukan INSERT)
+                 */
+                $limit = LimitModel::where('umkm_id', $data->id)->first();
+                if (!$limit) {
+                    throw new \Exception('Data limit UMKM tidak ditemukan');
+                }
+
+                $limit->limit = $limitValue;
+                $limit->save();
+            }
+
+            DB::commit();
+
+            return $this->success(
+                $data,
+                'success',
+                'Berhasil memperbarui data UMKM'
+            );
         } catch (\Throwable $th) {
             DB::rollBack();
             return $this->error($th->getMessage());
         }
     }
+
 
     public function deleteData($id)
     {

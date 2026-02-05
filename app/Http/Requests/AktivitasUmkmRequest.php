@@ -27,7 +27,7 @@ class AktivitasUmkmRequest extends FormRequest
             'periode_catur_wulan' => 'required',
             'aktivitas' => 'required',
             'permasalahan' => 'required',
-            'tanggal_pelaporan' => 'required'
+            'tanggal_aktivitas' => 'required'
         ];
     }
 
@@ -37,7 +37,7 @@ class AktivitasUmkmRequest extends FormRequest
             'periode_catur_wulan.required' => 'Periode Catur Wulan wajib diisi.',
             'aktivitas.required' => 'Aktivitas wajib diisi.',
             'permasalahan.required' => 'Permasalahan wajib diisi.',
-            'tanggal_pelaporan.required' => 'Tanggal Pelaporan wajib diisi.'
+            'tanggal_aktivitas.required' => 'Tanggal Pelaporan wajib diisi.'
         ];
     }
 

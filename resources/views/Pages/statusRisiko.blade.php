@@ -102,7 +102,7 @@
                             tableBody += "<td>" + item.umkm.nama_umkm + "</td>";
                             tableBody += "<td>" + item.status + "</td>";
                             tableBody += "<td>" + item.hari_keterlambatan + "</td>";
-                            tableBody += "<td>" + item.tanggal_berlaku + "</td>";
+                            tableBody += "<td>" + item.tanggal_penetapan + "</td>";
                             tableBody += "</tr>";
                         });
 

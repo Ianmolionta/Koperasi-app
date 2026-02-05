@@ -37,4 +37,9 @@ class PeminjamanController extends Controller
     {
         return $this->PeminjamanRepo->getDetail($id);
     }
+
+    public function getUmkmDetail($id)
+    {
+        return $this->PeminjamanRepo->getUmkmDetail($id);
+    }
 }

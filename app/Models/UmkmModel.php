@@ -50,11 +50,16 @@ class UmkmModel extends Model
 
     public function historiLimit()
     {
-        return $this->hasOne(HistoriLimitModel::class, 'histori_limit_id');
+        return $this->hasOne(HistoriLimitModel::class, 'umkm_id');
     }
 
     public function peminjaman()
     {
         return $this->hasOne(PeminjamanModel::class, 'peminjaman_id');
+    }
+
+    public function limit()
+    {
+        return $this->hasOne(LimitModel::class, 'umkm_id', 'id');
     }
 }

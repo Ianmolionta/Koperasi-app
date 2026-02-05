@@ -4,7 +4,7 @@ namespace App\Repositories;
 
 use App\Http\Requests\PeminjamanRequest;
 use App\Interfaces\PeminjamanInterface;
-use App\Models\HistoriLimitModel;
+use App\Models\LimitModel;
 use App\Models\PeminjamanModel;
 use App\Models\UmkmModel;
 use App\Traits\HttpResponTrait;
@@ -36,20 +36,17 @@ class PeminjamanRepositories implements PeminjamanInterface
         DB::beginTransaction();
 
         try {
-            /**
-             * 1. Ambil UMKM + lock
-             */
-            $umkm = UmkmModel::lockForUpdate()->find($request->umkm_id);
+            // 1. Ambil UMKM dengan Lock
+            $umkm = UmkmModel::with('limit')->lockForUpdate()->find($request->umkm_id);
+
             if (!$umkm) {
                 throw new \Exception('UMKM tidak ditemukan');
             }
 
-            /**
-             * 2. Validasi pinjaman aktif
-             */
+            // 2. Validasi pinjaman aktif (Hanya yang belum lunas/ditolak)
             $pinjamanAktif = $this->PeminjamanModel
                 ->where('umkm_id', $umkm->id)
-                ->where('status', '!=', 'lunas')
+                ->whereIn('status', ['pending', 'disetujui', 'berjalan'])
                 ->exists();
 
             if ($pinjamanAktif) {
@@ -57,57 +54,48 @@ class PeminjamanRepositories implements PeminjamanInterface
             }
 
             /**
-             * 3. Ambil jumlah pinjaman
+             * 3. PENENTUAN LIMIT BERJALAN (LOGIC FIX)
+             * Kita pastikan mengambil data TERAKHIR dari histori_limits 
+             * karena di situlah angka 55 juta (kenaikan 10%) disimpan.
              */
-            $jumlahPinjaman = (int) $request->jumlah_pinjaman;
+            $limitBerjalan = 0;
 
-            /** * 3. Ambil limit TERAKHIR dari histori_limit */
-            $historiLimitTerakhir = HistoriLimitModel::where('umkm_id', $umkm->id)->latest('tanggal_berlaku')->first();
+            // Ambil histori limit terbaru berdasarkan ID terbesar atau created_at terbaru
+            $historiTerbaru = DB::table('tb_histori_limit')
+                ->where('umkm_id', $umkm->id)
+                ->orderBy('id', 'desc')
+                ->first();
 
-            /**
-             * 4. Tentukan jenis UMKM berdasarkan jumlah pinjaman
-             */
-            if ($jumlahPinjaman >= 2_000_000 && $jumlahPinjaman <= 10_000_000) {
-                $jenisUmkm = 'Mikro';
-                $limitAktif = 10_000_000;
-            } elseif ($jumlahPinjaman > 10_000_000 && $jumlahPinjaman <= 50_000_000) {
-                $jenisUmkm = 'Kecil';
-                $limitAktif = 50_000_000;
-            } elseif ($jumlahPinjaman > 50_000_000 && $jumlahPinjaman <= 500_000_000) {
-                $jenisUmkm = 'Menengah';
-                $limitAktif = 500_000_000;
+            if ($historiTerbaru) {
+                // Jika ada histori (Misal: 55.000.000), gunakan ini
+                $limitBerjalan = (float) $historiTerbaru->limit_baru;
+            } elseif ($umkm->limit) {
+                // Jika belum pernah ada histori, pakai limit master (Misal: 50.000.000)
+                $limitBerjalan = (float) $umkm->limit->limit;
             } else {
-                throw new \Exception('Jumlah pinjaman tidak sesuai dengan klasifikasi UMKM');
+                throw new \Exception('Data limit master UMKM tidak ditemukan.');
             }
 
-            if ($jumlahPinjaman > $historiLimitTerakhir->limit_baru) {
-                throw new \Exception('Jumlah pinjaman melebihi limit UMKM (Limit: ' . number_format($historiLimitTerakhir->limit_baru) . ')');
+            // 4. Validasi input
+            $jumlahPinjaman = (float) $request->jumlah_pinjaman;
+
+            if ($jumlahPinjaman <= 0) {
+                throw new \Exception('Jumlah pinjaman tidak valid.');
             }
 
-            /**
-             * 5. Update jenis UMKM otomatis
-             */
-            $umkm->jenis_umkm = $jenisUmkm;
-            $umkm->save();
-
-            /**
-             * 6. Validasi batas maksimal (double safety)
-             */
-            if ($jumlahPinjaman > $limitAktif) {
+            // 5. Validasi terhadap limit berjalan (DEBUG: Pastikan angka dibandingkan dengan benar)
+            if ($jumlahPinjaman > $limitBerjalan) {
                 throw new \Exception(
-                    'Jumlah pinjaman melebihi batas maksimal ' . strtoupper($jenisUmkm)
+                    'Jumlah melebihi limit. Limit Anda saat ini Rp ' .
+                        number_format($limitBerjalan, 0, ',', '.') .
+                        '. Anda mengajukan Rp ' . number_format($jumlahPinjaman, 0, ',', '.')
                 );
             }
 
-            /**
-             * 7. Hitung bunga (2%)
-             */
+            // 6. Hitung Bunga & Simpan
             $bunga = $jumlahPinjaman * 0.02;
             $totalPinjaman = $jumlahPinjaman + $bunga;
 
-            /**
-             * 8. Simpan peminjaman
-             */
             $data = new $this->PeminjamanModel;
             $data->umkm_id = $umkm->id;
             $data->jumlah_pinjaman = $jumlahPinjaman;
@@ -118,20 +106,12 @@ class PeminjamanRepositories implements PeminjamanInterface
             $data->save();
 
             DB::commit();
-
-            return $this->success(
-                $data,
-                'success',
-                'Pengajuan berhasil. Jenis UMKM otomatis diperbarui menjadi ' . strtoupper($jenisUmkm)
-            );
+            return $this->success($data, 'success', 'Pengajuan pinjaman berhasil diajukan.');
         } catch (\Throwable $th) {
             DB::rollBack();
             return $this->error($th->getMessage());
         }
     }
-
-
-
 
     public function getDataById($id)
     {
@@ -186,5 +166,37 @@ class PeminjamanRepositories implements PeminjamanInterface
     {
         $data = $this->PeminjamanModel->with('pengembalian', 'umkm')->find($id);
         return $this->success($data, 'success', 'success get all data detail');
+    }
+
+    public function getUmkmDetail($id)
+    {
+        $umkm = UmkmModel::with(['limit'])->find($id);
+
+        if (!$umkm) {
+            return response()->json(['message' => 'Data tidak ditemukan'], 404);
+        }
+
+        // Ambil histori limit terakhir dengan pengurutan ID yang jelas
+        $latestHistori = $umkm->historiLimit()
+            ->orderBy('id', 'desc') // Memastikan baris terakhir database yang diambil
+            ->first();
+
+        // Logic penentuan limit aktif
+        $limitAktif = 0;
+        if ($latestHistori) {
+            $limitAktif = $latestHistori->limit_baru;
+        } elseif ($umkm->limit) {
+            $limitAktif = $umkm->limit->limit;
+        }
+
+        return response()->json([
+            'data' => [
+                'id' => $umkm->id,
+                'nama_umkm' => $umkm->nama,
+                'limit_master' => $umkm->limit->limit ?? 0,
+                'limit_saat_ini' => (int) $limitAktif,
+                'histori_terakhir' => $latestHistori // Sertakan ini untuk pengecekan di FE
+            ]
+        ]);
     }
 }
