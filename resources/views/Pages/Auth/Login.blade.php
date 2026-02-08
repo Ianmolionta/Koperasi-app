@@ -1,17 +1,19 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Login</title>
-    <link rel="shortcut icon" href="{{asset ('assets/assets/favicon/icon.png')}}" type="image/x-icon">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500&display=swap"
-        rel="stylesheet">
+    <title>Login - Sistem Informasi Koperasi Desa</title>
+    <link rel="shortcut icon" href="{{ asset('assets/assets/img/favicon/icon.png') }}" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
     <style>
+        /* ══════════════════════════════════════════════════════════════════════════════
+           CSS VARIABLES & RESET
+        ══════════════════════════════════════════════════════════════════════════════ */
         :root {
             --red-deep: #8B0000;
             --red-main: #C41E3A;
@@ -20,7 +22,17 @@
             --white: #FFFFFF;
             --off-white: #FAF7F5;
             --gray-light: #E8E0DC;
+            --gray-medium: #C4B5AE;
             --gray-text: #7A7178;
+            --gray-dark: #2C2427;
+            --error-red: #DC2626;
+            --success-green: #10B981;
+            --warning-yellow: #F59E0B;
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+            --shadow-md: 0 6px 20px rgba(196, 30, 58, 0.25);
+            --shadow-lg: 0 12px 40px rgba(139, 0, 0, 0.15);
+            --transition-base: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         * {
@@ -34,10 +46,15 @@
             min-height: 100vh;
             display: flex;
             background: var(--off-white);
+            color: var(--gray-dark);
             overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
-        /* ─── Left Panel (Visual) ─── */
+        /* ══════════════════════════════════════════════════════════════════════════════
+           LEFT PANEL - VISUAL DESIGN
+        ══════════════════════════════════════════════════════════════════════════════ */
         .left-panel {
             flex: 1;
             position: relative;
@@ -48,7 +65,7 @@
             justify-content: center;
         }
 
-        /* Layered geometric bg */
+        /* Gradient overlay background */
         .left-panel::before {
             content: '';
             position: absolute;
@@ -60,135 +77,70 @@
             z-index: 1;
         }
 
-        /* Floating circles */
+        /* Floating circles animation */
         .circle {
             position: absolute;
             border-radius: 50%;
             opacity: 0.12;
             background: var(--white);
             animation: floatCircle 8s ease-in-out infinite;
+            will-change: transform;
         }
 
-        .circle:nth-child(1) {
-            width: 300px;
-            height: 300px;
-            top: -80px;
-            left: -60px;
-            animation-delay: 0s;
-        }
-
-        .circle:nth-child(2) {
-            width: 180px;
-            height: 180px;
-            bottom: 60px;
-            left: 80px;
-            animation-delay: 2s;
-            opacity: 0.08;
-        }
-
-        .circle:nth-child(3) {
-            width: 120px;
-            height: 120px;
-            top: 40%;
-            right: 30px;
-            animation-delay: 4s;
-        }
-
-        .circle:nth-child(4) {
-            width: 60px;
-            height: 60px;
-            top: 15%;
-            left: 45%;
-            animation-delay: 1s;
-            opacity: 0.15;
-        }
-
-        .circle:nth-child(5) {
-            width: 200px;
-            height: 200px;
-            bottom: -50px;
-            right: -40px;
-            animation-delay: 3s;
-            opacity: 0.06;
-        }
+        .circle:nth-child(1) { width: 300px; height: 300px; top: -80px; left: -60px; animation-delay: 0s; }
+        .circle:nth-child(2) { width: 180px; height: 180px; bottom: 60px; left: 80px; animation-delay: 2s; opacity: 0.08; }
+        .circle:nth-child(3) { width: 120px; height: 120px; top: 40%; right: 30px; animation-delay: 4s; }
+        .circle:nth-child(4) { width: 60px; height: 60px; top: 15%; left: 45%; animation-delay: 1s; opacity: 0.15; }
+        .circle:nth-child(5) { width: 200px; height: 200px; bottom: -50px; right: -40px; animation-delay: 3s; opacity: 0.06; }
 
         @keyframes floatCircle {
-
-            0%,
-            100% {
-                transform: translateY(0px) scale(1);
-            }
-
-            50% {
-                transform: translateY(-18px) scale(1.03);
-            }
+            0%, 100% { transform: translateY(0px) scale(1); }
+            50% { transform: translateY(-18px) scale(1.03); }
         }
 
-        /* Diagonal stripe accent */
+        /* Diagonal stripe pattern */
         .stripe {
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            inset: 0;
             z-index: 1;
-            background: repeating-linear-gradient(-35deg,
-                    transparent,
-                    transparent 60px,
-                    rgba(255, 255, 255, 0.02) 60px,
-                    rgba(255, 255, 255, 0.02) 62px);
+            background: repeating-linear-gradient(
+                -35deg,
+                transparent,
+                transparent 60px,
+                rgba(255, 255, 255, 0.02) 60px,
+                rgba(255, 255, 255, 0.02) 62px
+            );
+            pointer-events: none;
         }
 
-        /* Content */
+        /* Left content */
         .left-content {
             position: relative;
             z-index: 2;
             color: var(--white);
             padding: 60px;
-            max-width: 420px;
+            max-width: 480px;
             animation: fadeUp 1s ease 0.3s both;
-        }
-
-        .logo-mark {
-            width: 56px;
-            height: 56px;
-            background: var(--white);
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 48px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-        }
-
-        .logo-mark svg {
-            width: 32px;
-            height: 32px;
         }
 
         .left-content h1 {
             font-family: 'Playfair Display', serif;
-            font-size: 2.6rem;
+            font-size: 2.8rem;
             font-weight: 700;
-            line-height: 1.15;
-            margin-bottom: 18px;
+            line-height: 1.2;
+            margin-bottom: 20px;
             letter-spacing: -0.5px;
         }
 
-        .left-content h1 em {
-            font-style: italic;
-            color: var(--red-light);
-        }
-
         .left-content p {
-            font-size: 1rem;
+            font-size: 1.05rem;
             font-weight: 300;
-            line-height: 1.7;
-            opacity: 0.75;
-            max-width: 340px;
+            line-height: 1.75;
+            opacity: 0.85;
+            max-width: 400px;
         }
 
-        /* Decorative bottom tag */
+        /* Version tag */
         .tag {
             position: absolute;
             bottom: 48px;
@@ -197,9 +149,10 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 0.78rem;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.8rem;
             letter-spacing: 0.5px;
+            font-weight: 400;
         }
 
         .tag .dot {
@@ -211,22 +164,15 @@
         }
 
         @keyframes pulse {
-
-            0%,
-            100% {
-                opacity: 1;
-                transform: scale(1);
-            }
-
-            50% {
-                opacity: 0.4;
-                transform: scale(0.8);
-            }
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.8); }
         }
 
-        /* ─── Right Panel (Form) ─── */
+        /* ══════════════════════════════════════════════════════════════════════════════
+           RIGHT PANEL - LOGIN FORM
+        ══════════════════════════════════════════════════════════════════════════════ */
         .right-panel {
-            flex: 0 0 460px;
+            flex: 0 0 500px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -234,7 +180,7 @@
             padding: 60px 50px;
             position: relative;
             background: var(--white);
-            box-shadow: -20px 0 60px rgba(139, 0, 0, 0.07);
+            box-shadow: -20px 0 60px rgba(139, 0, 0, 0.08);
         }
 
         .right-panel::before {
@@ -249,41 +195,46 @@
 
         .form-wrapper {
             width: 100%;
-            max-width: 340px;
+            max-width: 380px;
             animation: fadeUp 0.9s ease 0.5s both;
         }
 
+        /* Form header */
         .form-header {
-            margin-bottom: 38px;
+            margin-bottom: 40px;
+            text-align: left;
         }
 
         .form-header h2 {
             font-family: 'Playfair Display', serif;
-            font-size: 1.9rem;
+            font-size: 2rem;
             color: var(--red-deep);
-            margin-bottom: 6px;
+            margin-bottom: 8px;
+            font-weight: 700;
         }
 
         .form-header p {
-            font-size: 0.88rem;
+            font-size: 0.9rem;
             color: var(--gray-text);
-            font-weight: 300;
+            font-weight: 400;
         }
 
-        /* Input Group */
+        /* ══════════════════════════════════════════════════════════════════════════════
+           INPUT GROUPS WITH PROFESSIONAL VALIDATION
+        ══════════════════════════════════════════════════════════════════════════════ */
         .input-group {
-            margin-bottom: 22px;
+            margin-bottom: 24px;
             position: relative;
         }
 
         .input-group label {
             display: block;
-            font-size: 0.78rem;
-            font-weight: 500;
-            color: var(--gray-text);
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--gray-dark);
             text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 8px;
+            letter-spacing: 0.8px;
+            margin-bottom: 10px;
         }
 
         .input-wrap {
@@ -297,30 +248,33 @@
             transform: translateY(-50%);
             width: 18px;
             height: 18px;
-            color: var(--gray-light);
-            transition: color 0.3s;
+            color: var(--gray-medium);
+            transition: color var(--transition-base);
             pointer-events: none;
-        }
-
-        .input-group:focus-within .icon {
-            color: var(--red-main);
+            z-index: 2;
         }
 
         .input-wrap input {
             width: 100%;
-            padding: 14px 16px 14px 44px;
+            padding: 15px 16px 15px 46px;
             border: 2px solid var(--gray-light);
-            border-radius: 10px;
+            border-radius: 12px;
             font-family: 'DM Sans', sans-serif;
-            font-size: 0.92rem;
-            color: #2c2427;
+            font-size: 0.95rem;
+            color: var(--gray-dark);
             background: var(--off-white);
-            transition: border-color 0.3s, background 0.3s, box-shadow 0.3s;
+            transition: all var(--transition-base);
             outline: none;
         }
 
         .input-wrap input::placeholder {
-            color: #bbb;
+            color: var(--gray-medium);
+            opacity: 0.7;
+        }
+
+        /* Input focus state */
+        .input-group:focus-within .icon {
+            color: var(--red-main);
         }
 
         .input-group:focus-within input {
@@ -329,83 +283,110 @@
             box-shadow: 0 0 0 4px rgba(196, 30, 58, 0.1);
         }
 
-        /* Row: Remember + Forgot */
-        .options-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            margin-top: -8px;
+        /* ══════════════════════════════════════════════════════════════════════════════
+           VALIDATION STATES - PROFESSIONAL ERROR HANDLING
+        ══════════════════════════════════════════════════════════════════════════════ */
+        
+        /* Error state */
+        .input-group.error .icon {
+            color: var(--error-red);
         }
 
-        .remember {
-            display: flex;
+        .input-group.error input {
+            border-color: var(--error-red);
+            background: #FEF2F2;
+        }
+
+        .input-group.error:focus-within input {
+            box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.1);
+        }
+
+        /* Success state */
+        .input-group.success .icon {
+            color: var(--success-green);
+        }
+
+        .input-group.success input {
+            border-color: var(--success-green);
+            background: #F0FDF4;
+        }
+
+        .input-group.success:focus-within input {
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+        }
+
+        /* Validation message */
+        .validation-message {
+            display: none;
+            margin-top: 8px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 500;
             align-items: center;
             gap: 8px;
-            font-size: 0.82rem;
-            color: var(--gray-text);
-            cursor: pointer;
-            user-select: none;
+            animation: slideDown 0.3s ease;
         }
 
-        .remember input[type="checkbox"] {
-            appearance: none;
-            width: 18px;
-            height: 18px;
-            border: 2px solid var(--gray-light);
-            border-radius: 5px;
-            background: var(--off-white);
-            transition: all 0.25s;
-            cursor: pointer;
-            position: relative;
+        .validation-message.show {
+            display: flex;
         }
 
-        .remember input[type="checkbox"]:checked {
-            background: var(--red-main);
-            border-color: var(--red-main);
+        .validation-message.error {
+            background: #FEF2F2;
+            color: var(--error-red);
+            border-left: 3px solid var(--error-red);
         }
 
-        .remember input[type="checkbox"]:checked::after {
-            content: '';
-            position: absolute;
-            left: 5px;
-            top: 2px;
-            width: 6px;
-            height: 10px;
-            border: solid white;
-            border-width: 0 2px 2px 0;
-            transform: rotate(45deg);
+        .validation-message.success {
+            background: #F0FDF4;
+            color: var(--success-green);
+            border-left: 3px solid var(--success-green);
         }
 
-        .forgot {
-            font-size: 0.82rem;
-            color: var(--red-main);
-            text-decoration: none;
-            font-weight: 500;
-            transition: color 0.2s;
+        .validation-message.warning {
+            background: #FFFBEB;
+            color: var(--warning-yellow);
+            border-left: 3px solid var(--warning-yellow);
         }
 
-        .forgot:hover {
-            color: var(--red-bright);
+        .validation-message svg {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
         }
 
-        /* Button */
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ══════════════════════════════════════════════════════════════════════════════
+           BUTTON & INTERACTIVE ELEMENTS
+        ══════════════════════════════════════════════════════════════════════════════ */
         .btn-login {
             width: 100%;
-            padding: 15px;
+            padding: 16px;
             background: linear-gradient(135deg, var(--red-main), var(--red-deep));
             color: var(--white);
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             font-family: 'DM Sans', sans-serif;
             font-size: 0.95rem;
-            font-weight: 500;
-            letter-spacing: 0.8px;
+            font-weight: 600;
+            letter-spacing: 1px;
             cursor: pointer;
             position: relative;
             overflow: hidden;
-            transition: transform 0.2s, box-shadow 0.3s;
-            box-shadow: 0 6px 20px rgba(196, 30, 58, 0.35);
+            transition: all var(--transition-base);
+            box-shadow: var(--shadow-md);
+            text-transform: uppercase;
         }
 
         .btn-login::before {
@@ -415,29 +396,59 @@
             left: -100%;
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
             transition: left 0.5s;
         }
 
-        .btn-login:hover::before {
+        .btn-login:hover:not(:disabled)::before {
             left: 100%;
         }
 
-        .btn-login:hover {
+        .btn-login:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 8px 28px rgba(196, 30, 58, 0.45);
+            box-shadow: 0 10px 32px rgba(196, 30, 58, 0.4);
         }
 
-        .btn-login:active {
+        .btn-login:active:not(:disabled) {
             transform: translateY(0);
         }
 
-        /* Divider */
+        .btn-login:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .btn-login.loading {
+            pointer-events: none;
+        }
+
+        .btn-login.loading::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            top: 50%;
+            left: 50%;
+            margin-left: -10px;
+            margin-top: -10px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--white);
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ══════════════════════════════════════════════════════════════════════════════
+           LOGO DISPLAY SECTION
+        ══════════════════════════════════════════════════════════════════════════════ */
         .divider {
             display: flex;
             align-items: center;
-            margin: 28px 0;
-            gap: 12px;
+            margin: 32px 0 28px 0;
+            gap: 14px;
         }
 
         .divider::before,
@@ -445,83 +456,73 @@
             content: '';
             flex: 1;
             height: 1px;
-            background: var(--gray-light);
+            background: linear-gradient(90deg, transparent, var(--gray-light), transparent);
         }
 
         .divider span {
-            font-size: 0.76rem;
+            font-size: 0.75rem;
             color: var(--gray-text);
             text-transform: uppercase;
-            letter-spacing: 1.5px;
+            letter-spacing: 1.2px;
+            font-weight: 500;
         }
 
-        /* Social */
-        .social-row {
+        .logo-container {
             display: flex;
-            gap: 12px;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            margin-top: 20px;
         }
 
-        .social-btn {
-            flex: 1;
-            padding: 12px 0;
-            border: 2px solid var(--gray-light);
-            border-radius: 10px;
-            background: var(--white);
-            cursor: pointer;
+        .logo-mark {
+            width: 72px;
+            height: 72px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            font-family: 'DM Sans', sans-serif;
-            font-size: 0.82rem;
-            color: #2c2427;
-            font-weight: 500;
-            transition: border-color 0.25s, background 0.25s, transform 0.2s;
+            border-radius: 14px;
+            background: var(--off-white);
+            border: 2px solid var(--gray-light);
+            transition: all var(--transition-base);
+            overflow: hidden;
         }
 
-        .social-btn:hover {
+        .logo-mark:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-sm);
             border-color: var(--red-light);
-            background: #fff5f6;
-            transform: translateY(-1px);
         }
 
-        .social-btn svg {
-            width: 18px;
-            height: 18px;
+        .logo-mark img {
+            width: 52px;
+            height: 52px;
+            object-fit: contain;
         }
 
-        /* Sign Up Link */
-        .signup-link {
-            text-align: center;
-            margin-top: 32px;
-            font-size: 0.84rem;
-            color: var(--gray-text);
-        }
-
-        .signup-link a {
-            color: var(--red-main);
-            text-decoration: none;
-            font-weight: 500;
-        }
-
-        .signup-link a:hover {
-            text-decoration: underline;
-        }
-
-        /* ─── Animations ─── */
+        /* ══════════════════════════════════════════════════════════════════════════════
+           ANIMATIONS
+        ══════════════════════════════════════════════════════════════════════════════ */
         @keyframes fadeUp {
             from {
                 opacity: 0;
-                transform: translateY(22px);
+                transform: translateY(24px);
             }
-
             to {
                 opacity: 1;
                 transform: translateY(0);
             }
         }
 
-        /* ─── Responsive ─── */
+        /* ══════════════════════════════════════════════════════════════════════════════
+           RESPONSIVE DESIGN
+        ══════════════════════════════════════════════════════════════════════════════ */
+        @media (max-width: 1024px) {
+            .right-panel {
+                flex: 0 0 440px;
+            }
+        }
+
         @media (max-width: 900px) {
             body {
                 flex-direction: column;
@@ -530,8 +531,8 @@
 
             .left-panel {
                 flex: none;
-                height: 38vh;
-                min-height: 280px;
+                height: 40vh;
+                min-height: 300px;
             }
 
             .left-content {
@@ -540,7 +541,7 @@
             }
 
             .left-content h1 {
-                font-size: 2rem;
+                font-size: 2.2rem;
             }
 
             .tag {
@@ -551,26 +552,26 @@
             .right-panel {
                 flex: none;
                 width: 100%;
-                padding: 50px 30px;
+                padding: 50px 32px;
             }
         }
 
-        @media (max-width: 500px) {
+        @media (max-width: 600px) {
             .left-panel {
-                height: 30vh;
-                min-height: 220px;
+                height: 32vh;
+                min-height: 240px;
             }
 
             .left-content {
-                padding: 32px 28px;
+                padding: 32px 24px;
             }
 
             .left-content h1 {
-                font-size: 1.6rem;
+                font-size: 1.8rem;
             }
 
             .left-content p {
-                display: none;
+                font-size: 0.92rem;
             }
 
             .right-panel {
@@ -580,13 +581,42 @@
             .form-wrapper {
                 max-width: 100%;
             }
+
+            .form-header h2 {
+                font-size: 1.7rem;
+            }
+
+            .logo-container {
+                gap: 12px;
+            }
+
+            .logo-mark {
+                width: 64px;
+                height: 64px;
+            }
+
+            .logo-mark img {
+                width: 44px;
+                height: 44px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .left-content p {
+                display: none;
+            }
+
+            .tag {
+                font-size: 0.7rem;
+            }
         }
     </style>
 </head>
 
 <body>
-
-    <!-- ─── Left: Visual Panel ─── -->
+    <!-- ══════════════════════════════════════════════════════════════════════════════
+         LEFT PANEL - VISUAL DESIGN
+    ══════════════════════════════════════════════════════════════════════════════ -->
     <div class="left-panel">
         <div class="circle"></div>
         <div class="circle"></div>
@@ -596,23 +626,14 @@
         <div class="stripe"></div>
 
         <div class="left-content">
-            <div class="logo-mark">
-                <svg viewBox="0 0 32 32" fill="none">
-                    <path d="M16 4L28 10V22L16 28L4 22V10L16 4Z" fill="#C41E3A" />
-                    <path d="M16 10L22 13.5V20.5L16 24L10 20.5V13.5L16 10Z" fill="white" />
-                </svg>
-            </div>
-            <h1>Welcome<br>back to <em>our</em><br>platform.</h1>
-            <p>Masuk ke akun Anda untuk mengakses dasbor, laporan, dan semua fitur eksklusif yang tersedia.</p>
-        </div>
-
-        <div class="tag">
-            <span class="dot"></span>
-            Sistem online &middot; Versi 2.4.1
+            <h1>Selamat Datang Di<br>Sistem Informasi<br>Koperasi Desa</h1>
+            <p>Masuk ke akun Anda untuk mengakses dasbor, dan laporan untuk pengelolaan koperasi.</p>
         </div>
     </div>
 
-    <!-- ─── Right: Login Form ─── -->
+    <!-- ══════════════════════════════════════════════════════════════════════════════
+         RIGHT PANEL - LOGIN FORM
+    ══════════════════════════════════════════════════════════════════════════════ -->
     <div class="right-panel">
         <div class="form-wrapper">
             <div class="form-header">
@@ -620,124 +641,389 @@
                 <p>Masukkan kredensial Anda untuk melanjutkan</p>
             </div>
 
-            <form onsubmit="event.preventDefault(); handleLogin();">
+            <form id="loginForm">
                 @csrf
-                <div class="input-group">
-                    <label>Username</label>
+                
+                <!-- Username Input -->
+                <div class="input-group" id="usernameGroup">
+                    <label for="usernameInput">Username</label>
                     <div class="input-wrap">
-                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="2" y="4" width="20" height="16" rx="2" />
-                            <path d="M22 7l-10 6L2 7" />
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
                         </svg>
-                        <input type="text" placeholder="Fajrian" required id="usernameInput">
+                        <input 
+                            type="text" 
+                            id="usernameInput" 
+                            name="username"
+                            placeholder="Masukkan username Anda" 
+                            autocomplete="username"
+                            maxlength="50"
+                        >
+                    </div>
+                    <div class="validation-message" id="usernameError">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        <span></span>
                     </div>
                 </div>
 
-                <div class="input-group">
-                    <label>Kata Sandi</label>
+                <!-- Password Input -->
+                <div class="input-group" id="passwordGroup">
+                    <label for="passwordInput">Kata Sandi</label>
                     <div class="input-wrap">
-                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                         </svg>
-                        <input type="password" placeholder="••••••••" required id="passwordInput">
+                        <input 
+                            type="password" 
+                            id="passwordInput" 
+                            name="password"
+                            placeholder="Masukkan kata sandi Anda" 
+                            autocomplete="current-password"
+                            maxlength="100"
+                        >
+                    </div>
+                    <div class="validation-message" id="passwordError">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        <span></span>
                     </div>
                 </div>
 
-                <div class="options-row">
-                    <label class="remember">
-                        <input type="checkbox"> Ingat saya
-                    </label>
-                    <a href="#" class="forgot">Lupa kata sandi?</a>
-                </div>
-
-                <button type="submit" class="btn-login">MASUK</button>
+                <button type="submit" class="btn-login" id="loginBtn">
+                    <span id="btnText">Masuk</span>
+                </button>
             </form>
+
+            <div class="divider">
+                <span>Partner Sistem</span>
+            </div>
+
+            <!-- Logo Section -->
+            <div class="logo-container">
+                <div class="logo-mark">
+                    <img src="{{ asset('assets/assets/img/favicon/icon.png') }}" alt="Logo Koperasi">
+                </div>
+                <div class="logo-mark">
+                    <img src="{{ asset('assets/assets/img/favicon/joCodes.jpeg') }}" alt="Logo JoCodes">
+                </div>
+                <div class="logo-mark">
+                    <img src="{{ asset('assets/assets/img/favicon/STMIK.jpg') }}" alt="Logo STMIK">
+                </div>
+            </div>
         </div>
     </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════════════════
+         SCRIPTS
+    ══════════════════════════════════════════════════════════════════════════════ -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
     <script>
         $(document).ready(function() {
-            // CSRF Setup untuk jQuery Ajax
+            // ═══════════════════════════════════════════════════════════════════════
+            // CSRF TOKEN SETUP
+            // ═══════════════════════════════════════════════════════════════════════
             $.ajaxSetup({
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 }
             });
 
-            // Gunakan window agar bisa dipanggil dari onsubmit di HTML
-            window.handleLogin = function() {
+            // ═══════════════════════════════════════════════════════════════════════
+            // VALIDATION HELPER FUNCTIONS
+            // ═══════════════════════════════════════════════════════════════════════
+            const ValidationHelper = {
+                // Show error message
+                showError: function(groupId, message) {
+                    const $group = $(`#${groupId}`);
+                    const $errorMsg = $group.find('.validation-message');
+                    
+                    $group.removeClass('success').addClass('error');
+                    $errorMsg.removeClass('success warning').addClass('error show');
+                    $errorMsg.find('span').text(message);
+                },
+
+                // Show success message
+                showSuccess: function(groupId) {
+                    const $group = $(`#${groupId}`);
+                    const $errorMsg = $group.find('.validation-message');
+                    
+                    $group.removeClass('error').addClass('success');
+                    $errorMsg.removeClass('show'); // Hide message for success
+                },
+
+                // Clear validation state
+                clearValidation: function(groupId) {
+                    const $group = $(`#${groupId}`);
+                    const $errorMsg = $group.find('.validation-message');
+                    
+                    $group.removeClass('error success');
+                    $errorMsg.removeClass('error success warning show');
+                },
+
+                // Clear all validations
+                clearAll: function() {
+                    this.clearValidation('usernameGroup');
+                    this.clearValidation('passwordGroup');
+                },
+
+                // Validate username
+                validateUsername: function(username) {
+                    if (!username || username.trim() === '') {
+                        return { valid: false, message: 'Username tidak boleh kosong' };
+                    }
+                    
+                    if (username.length < 3) {
+                        return { valid: false, message: 'Username minimal 3 karakter' };
+                    }
+                    
+                    if (username.length > 50) {
+                        return { valid: false, message: 'Username maksimal 50 karakter' };
+                    }
+                    
+                    // Only allow alphanumeric, underscore, dash, and dot
+                    const usernamePattern = /^[a-zA-Z0-9._-]+$/;
+                    if (!usernamePattern.test(username)) {
+                        return { valid: false, message: 'Username hanya boleh mengandung huruf, angka, titik, garis bawah, dan strip' };
+                    }
+                    
+                    return { valid: true, message: '' };
+                },
+
+                // Validate password
+                validatePassword: function(password) {
+                    if (!password || password.trim() === '') {
+                        return { valid: false, message: 'Kata sandi tidak boleh kosong' };
+                    }
+                    
+                    if (password.length < 6) {
+                        return { valid: false, message: 'Kata sandi minimal 6 karakter' };
+                    }
+                    
+                    if (password.length > 100) {
+                        return { valid: false, message: 'Kata sandi terlalu panjang' };
+                    }
+                    
+                    return { valid: true, message: '' };
+                }
+            };
+
+            // ═══════════════════════════════════════════════════════════════════════
+            // REAL-TIME VALIDATION ON INPUT
+            // ═══════════════════════════════════════════════════════════════════════
+            let usernameTimer, passwordTimer;
+
+            $('#usernameInput').on('input', function() {
+                clearTimeout(usernameTimer);
+                const username = $(this).val().trim();
+                
+                // Clear validation if empty
+                if (username === '') {
+                    ValidationHelper.clearValidation('usernameGroup');
+                    return;
+                }
+                
+                // Debounce validation
+                usernameTimer = setTimeout(function() {
+                    const validation = ValidationHelper.validateUsername(username);
+                    if (!validation.valid) {
+                        ValidationHelper.showError('usernameGroup', validation.message);
+                    } else {
+                        ValidationHelper.showSuccess('usernameGroup');
+                    }
+                }, 500);
+            });
+
+            $('#passwordInput').on('input', function() {
+                clearTimeout(passwordTimer);
+                const password = $(this).val();
+                
+                // Clear validation if empty
+                if (password === '') {
+                    ValidationHelper.clearValidation('passwordGroup');
+                    return;
+                }
+                
+                // Debounce validation
+                passwordTimer = setTimeout(function() {
+                    const validation = ValidationHelper.validatePassword(password);
+                    if (!validation.valid) {
+                        ValidationHelper.showError('passwordGroup', validation.message);
+                    } else {
+                        ValidationHelper.showSuccess('passwordGroup');
+                    }
+                }, 500);
+            });
+
+            // ═══════════════════════════════════════════════════════════════════════
+            // FORM SUBMISSION HANDLER
+            // ═══════════════════════════════════════════════════════════════════════
+            $('#loginForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                // Get values
                 const username = $('#usernameInput').val().trim();
                 const password = $('#passwordInput').val();
-                const $btn = $('.btn-login');
+                const $btn = $('#loginBtn');
+                const $btnText = $('#btnText');
 
-                // 1. Validasi Sederhana (Frontend)
-                if (!username || !password) {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Opps...',
-                        text: 'Email dan Password wajib diisi!',
-                        confirmButtonColor: '#C41E3A'
-                    });
+                // Clear previous validations
+                ValidationHelper.clearAll();
+
+                // Validate username
+                const usernameValidation = ValidationHelper.validateUsername(username);
+                if (!usernameValidation.valid) {
+                    ValidationHelper.showError('usernameGroup', usernameValidation.message);
+                    $('#usernameInput').focus();
                     return;
                 }
 
-                // 2. Efek Loading
-                const originalText = $btn.text();
-                $btn.text('Memproses...').prop('disabled', true).css('opacity', '0.7');
+                // Validate password
+                const passwordValidation = ValidationHelper.validatePassword(password);
+                if (!passwordValidation.valid) {
+                    ValidationHelper.showError('passwordGroup', passwordValidation.message);
+                    $('#passwordInput').focus();
+                    return;
+                }
 
-                // 3. Eksekusi Ajax
+                // Show loading state
+                $btn.prop('disabled', true).addClass('loading');
+                $btnText.text('Memproses...');
+
+                // Execute AJAX request
                 $.ajax({
                     url: '/login-proses',
                     method: 'POST',
                     data: JSON.stringify({
-                        username,
-                        password
+                        username: username,
+                        password: password
                     }),
                     contentType: 'application/json',
                     dataType: 'json',
+                    timeout: 30000, // 30 seconds timeout
+                    
                     success: function(response) {
-                        // Notifikasi Sukses
+                        // Show success notification
                         Swal.fire({
                             icon: 'success',
-                            title: 'Berhasil!',
-                            text: 'Selamat datang kembali.',
+                            title: 'Login Berhasil!',
+                            text: 'Selamat datang kembali. Anda akan diarahkan ke dashboard...',
                             showConfirmButton: false,
-                            timer: 1500
+                            timer: 2000,
+                            timerProgressBar: true,
+                            customClass: {
+                                popup: 'swal-custom'
+                            }
                         }).then(() => {
-                            window.location.href = '/';
+                            // Redirect to dashboard
+                            window.location.href = response.redirect || '/';
                         });
                     },
-                    error: function(xhr) {
-                        // Ambil pesan error dari server
-                        let errorMsg = 'Email atau password salah.';
-                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                    
+                    error: function(xhr, status, error) {
+                        // Reset button state
+                        $btn.prop('disabled', false).removeClass('loading');
+                        $btnText.text('Masuk');
+
+                        let errorTitle = 'Login Gagal';
+                        let errorMsg = 'Terjadi kesalahan saat login. Silakan coba lagi.';
+
+                        // Handle different error scenarios
+                        if (status === 'timeout') {
+                            errorMsg = 'Koneksi timeout. Periksa koneksi internet Anda dan coba lagi.';
+                        } else if (xhr.status === 401 || xhr.status === 422) {
+                            errorTitle = 'Kredensial Tidak Valid';
+                            errorMsg = 'Username atau kata sandi yang Anda masukkan salah. Silakan periksa kembali.';
+                            
+                            // Show validation errors
+                            ValidationHelper.showError('usernameGroup', 'Username atau kata sandi salah');
+                            ValidationHelper.showError('passwordGroup', 'Username atau kata sandi salah');
+                        } else if (xhr.status === 429) {
+                            errorMsg = 'Terlalu banyak percobaan login. Silakan tunggu beberapa saat.';
+                        } else if (xhr.status === 500) {
+                            errorMsg = 'Terjadi kesalahan pada server. Silakan hubungi administrator.';
+                        } else if (xhr.responseJSON && xhr.responseJSON.message) {
                             errorMsg = xhr.responseJSON.message;
                         }
 
+                        // Show error notification
                         Swal.fire({
                             icon: 'error',
-                            title: 'Login Gagal',
+                            title: errorTitle,
                             text: errorMsg,
-                            confirmButtonColor: '#8B0000'
+                            confirmButtonColor: '#C41E3A',
+                            confirmButtonText: 'Coba Lagi',
+                            customClass: {
+                                popup: 'swal-custom'
+                            }
                         });
-
-                        // Reset Button
-                        $btn.text(originalText).prop('disabled', false).css('opacity', '1');
                     }
                 });
-            };
+            });
 
-            // Toggle password visibility (Bonus)
-            $('.input-group:last-of-type label').on('dblclick', function() {
-                const input = $('#passwordInput');
-                input.attr('type', input.attr('type') === 'password' ? 'text' : 'password');
+            // ═══════════════════════════════════════════════════════════════════════
+            // ADDITIONAL FEATURES
+            // ═══════════════════════════════════════════════════════════════════════
+            
+            // Press Enter to submit
+            $('#usernameInput, #passwordInput').on('keypress', function(e) {
+                if (e.which === 13) {
+                    $('#loginForm').submit();
+                }
+            });
+
+            // Clear validation on focus
+            $('#usernameInput').on('focus', function() {
+                if ($(this).val().trim() !== '') return;
+                ValidationHelper.clearValidation('usernameGroup');
+            });
+
+            $('#passwordInput').on('focus', function() {
+                if ($(this).val() !== '') return;
+                ValidationHelper.clearValidation('passwordGroup');
+            });
+
+            // Prevent XSS in input fields
+            $('#usernameInput, #passwordInput').on('paste', function(e) {
+                setTimeout(() => {
+                    const val = $(this).val();
+                    // Remove any HTML tags
+                    const cleaned = val.replace(/<[^>]*>/g, '');
+                    if (val !== cleaned) {
+                        $(this).val(cleaned);
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Perhatian',
+                            text: 'Karakter HTML tidak diperbolehkan',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    }
+                }, 10);
             });
         });
     </script>
+
+    <!-- Custom SweetAlert2 Styles -->
+    <style>
+        .swal-custom {
+            font-family: 'DM Sans', sans-serif !important;
+        }
+        
+        .swal2-timer-progress-bar {
+            background: var(--red-main) !important;
+        }
+    </style>
 </body>
 
 </html>
