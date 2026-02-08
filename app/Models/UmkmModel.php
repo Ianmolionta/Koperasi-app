@@ -30,7 +30,7 @@ class UmkmModel extends Model
 
     public function kategoriUmkm()
     {
-        return $this->belongsTo(kategoriUmkmModel::class, 'kategori_umkm_id');
+        return $this->belongsTo(KategoriUmkmModel::class, 'kategori_umkm_id');
     }
 
     public function user()
@@ -40,7 +40,7 @@ class UmkmModel extends Model
 
     public function statusRisikoUmkm()
     {
-        return $this->hasOne(statusRisikoUmkmModel::class, 'umkm_id');
+        return $this->hasOne(StatusRisikoUmkmModel::class, 'umkm_id');
     }
 
     public function aktivitasUmkm()
