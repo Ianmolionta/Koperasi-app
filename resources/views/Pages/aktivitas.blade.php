@@ -43,7 +43,7 @@
                         <h5 class="modal-title mb-0 text-white" id="modalTitle">Tambah Aktivitas UMKM</h5>
                         <small class="text-white opacity-75">Isi formulir dengan lengkap dan benar</small>
                     </div>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4">
                     <form id="aktivitasForm" method="POST">
@@ -99,9 +99,9 @@
                                         </span>
                                         <select class="form-select" id="periode_catur_wulan" name="periode_catur_wulan">
                                             <option value="">Pilih Periode</option>
-                                            <option value="Januari - April">Januari - April</option>
-                                            <option value="Mei - Agustus">Mei - Agustus</option>
-                                            <option value="September - Desember">September - Desember</option>
+                                            <option value="cw1">Januari - April</option>
+                                            <option value="cw2">Mei - Agustus</option>
+                                            <option value="cw3">September - Desember</option>
                                         </select>
                                     </div>
                                     <small class="text-danger" id="periode_catur_wulan-error"></small>
@@ -260,7 +260,7 @@
 
             // Data user yang sedang login (dari Laravel Auth)
             const currentUser = {
-                id: "{{ auth()->user()->id ?? '' }}", // Tambahkan tanda petik di sini
+                id: "{{ auth()->user()->id ?? '' }}",
                 nama: "{{ auth()->user()->nama ?? '' }}"
             };
 
@@ -285,9 +285,7 @@
             // Initialize DataTable
             const table = $('#aktivitasTable').DataTable({
                 processing: true,
-                order: [
-                    [4, 'desc']
-                ], // Sort by tanggal
+                order: [[4, 'desc']], // Sort by tanggal
                 language: {
                     search: "Pencarian:",
                     lengthMenu: "Tampilkan _MENU_ data per halaman",
@@ -313,8 +311,7 @@
                         if (response.data) {
                             let options = '<option value="">Pilih UMKM</option>';
                             $.each(response.data, function(index, umkm) {
-                                options +=
-                                    `<option value="${umkm.id}">${umkm.nama_umkm}</option>`;
+                                options += `<option value="${umkm.id}">${umkm.nama_umkm}</option>`;
                             });
                             $('#umkm_id').html(options);
                         }
@@ -330,12 +327,78 @@
                 }
             }
 
+            // Clear all validation errors
+            function clearValidationErrors() {
+                // Clear error messages
+                $('.text-danger[id$="-error"]').text('');
+                
+                // Remove invalid class from form controls
+                $('.form-control, .form-select').removeClass('is-invalid');
+                
+                // Remove invalid class from summernote
+                $('.note-editor').removeClass('is-invalid');
+            }
+
             // Strip HTML tags untuk preview
             function stripHtml(html) {
                 let tmp = document.createElement("DIV");
                 tmp.innerHTML = html;
                 let text = tmp.textContent || tmp.innerText || "";
                 return text.length > 100 ? text.substring(0, 100) + '...' : text;
+            }
+
+            // Validasi form sebelum submit
+            function validateForm() {
+                let isValid = true;
+                clearValidationErrors();
+
+                // Validasi Nama UMKM
+                if (!$('#umkm_id').val()) {
+                    $('#umkm_id').addClass('is-invalid');
+                    $('#umkm_id-error').text('Nama UMKM harus dipilih');
+                    isValid = false;
+                }
+
+                // Validasi Petugas
+                if (!$('#users_id').val()) {
+                    $('#users_name').addClass('is-invalid');
+                    $('#users_id-error').text('Petugas harus terisi');
+                    isValid = false;
+                }
+
+                // Validasi Periode Catur Wulan
+                if (!$('#periode_catur_wulan').val()) {
+                    $('#periode_catur_wulan').addClass('is-invalid');
+                    $('#periode_catur_wulan-error').text('Periode Catur Wulan harus dipilih');
+                    isValid = false;
+                }
+
+                // Validasi Tanggal Aktivitas
+                if (!$('#tanggal_aktivitas').val()) {
+                    $('#tanggal_aktivitas').addClass('is-invalid');
+                    $('#tanggal_aktivitas-error').text('Tanggal Aktivitas harus diisi');
+                    isValid = false;
+                }
+
+                // Validasi Aktivitas
+                const aktivitasContent = $('#aktivitas').summernote('code');
+                const aktivitasText = stripHtml(aktivitasContent).trim();
+                if (!aktivitasText || aktivitasText === '') {
+                    $('#aktivitas').next('.note-editor').addClass('is-invalid');
+                    $('#aktivitas-error').text('Aktivitas harus diisi');
+                    isValid = false;
+                }
+
+                // Validasi Permasalahan
+                const permasalahanContent = $('#permasalahan').summernote('code');
+                const permasalahanText = stripHtml(permasalahanContent).trim();
+                if (!permasalahanText || permasalahanText === '') {
+                    $('#permasalahan').next('.note-editor').addClass('is-invalid');
+                    $('#permasalahan-error').text('Permasalahan harus diisi');
+                    isValid = false;
+                }
+
+                return isValid;
             }
 
             // Load data aktivitas
@@ -395,15 +458,25 @@
 
             // Reset form modal
             function resetForm() {
+                // Reset form HTML
                 $('#aktivitasForm')[0].reset();
                 $('#aktivitasId').val('');
-                $('#aktivitas').summernote('code', '');
-                $('#permasalahan').summernote('code', '');
+                
+                // Reset summernote
+                if ($('#aktivitas').data('summernote')) {
+                    $('#aktivitas').summernote('code', '');
+                }
+                if ($('#permasalahan').data('summernote')) {
+                    $('#permasalahan').summernote('code', '');
+                }
+                
+                // Clear validation errors
+                clearValidationErrors();
+                
+                // Reset mode
                 isEditMode = false;
                 currentAktivitasId = null;
                 $('#modalTitle').text('Tambah Aktivitas UMKM');
-                $('.text-danger').text('');
-                $('.form-control, .form-select').removeClass('is-invalid');
 
                 // Set current user sebagai petugas
                 setCurrentUserAsPetugas();
@@ -417,16 +490,74 @@
                 initSummernote();
             });
 
-            // Destroy summernote when modal closes
+            // Reset form when modal closes
             $('#aktivitasModal').on('hidden.bs.modal', function() {
-                $('.summernote').summernote('destroy');
+                // Destroy summernote
+                if ($('#aktivitas').data('summernote')) {
+                    $('#aktivitas').summernote('destroy');
+                }
+                if ($('#permasalahan').data('summernote')) {
+                    $('#permasalahan').summernote('destroy');
+                }
+                
+                // Reset form completely
+                resetForm();
             });
 
-            // Save data
+            // Real-time validation - hapus error saat field diisi
+            $('#umkm_id').on('change', function() {
+                if ($(this).val()) {
+                    $(this).removeClass('is-invalid');
+                    $('#umkm_id-error').text('');
+                }
+            });
+
+            $('#periode_catur_wulan').on('change', function() {
+                if ($(this).val()) {
+                    $(this).removeClass('is-invalid');
+                    $('#periode_catur_wulan-error').text('');
+                }
+            });
+
+            $('#tanggal_aktivitas').on('change', function() {
+                if ($(this).val()) {
+                    $(this).removeClass('is-invalid');
+                    $('#tanggal_aktivitas-error').text('');
+                }
+            });
+
+            // Real-time validation untuk summernote
+            $('#aktivitas').on('summernote.change', function() {
+                const content = $(this).summernote('code');
+                const text = stripHtml(content).trim();
+                if (text && text !== '') {
+                    $(this).next('.note-editor').removeClass('is-invalid');
+                    $('#aktivitas-error').text('');
+                }
+            });
+
+            $('#permasalahan').on('summernote.change', function() {
+                const content = $(this).summernote('code');
+                const text = stripHtml(content).trim();
+                if (text && text !== '') {
+                    $(this).next('.note-editor').removeClass('is-invalid');
+                    $('#permasalahan-error').text('');
+                }
+            });
+
+            // Save data - FIXED VERSION
             $('#saveBtn').click(function() {
-                // Clear previous errors
-                $('.text-danger').text('');
-                $('.form-control, .form-select').removeClass('is-invalid');
+                // Validasi form terlebih dahulu
+                if (!validateForm()) {
+                    const firstError = $('.is-invalid').first();
+                    if (firstError.length) {
+                        $('html, body').animate({
+                            scrollTop: firstError.offset().top - 100
+                        }, 300);
+                        firstError.focus();
+                    }
+                    return;
+                }
 
                 const formData = {
                     umkm_id: $('#umkm_id').val(),
@@ -441,60 +572,85 @@
                 const url = isEditMode ? `/v1/aktivitas/update/${currentAktivitasId}` :
                     '/v1/aktivitas/create';
 
-                Swal.fire({
-                    title: 'Menyimpan...',
-                    text: 'Mohon tunggu sebentar',
-                    allowOutsideClick: false,
-                    allowEscapeKey: false,
-                    didOpen: () => {
-                        Swal.showLoading();
-                    }
-                });
+                // Tutup modal terlebih dahulu
+                $('#aktivitasModal').modal('hide');
+                
+                // Tunggu animasi modal selesai
+                setTimeout(() => {
+                    Swal.fire({
+                        title: 'Menyimpan...',
+                        text: 'Mohon tunggu sebentar',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
 
-                $.ajax({
-                    url: url,
-                    type: 'POST',
-                    data: formData,
-                    dataType: 'json',
-                    success: function(response) {
-                        if (response.status === 'success') {
-                            $('#aktivitasModal').modal('hide');
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Berhasil!',
-                                text: response.message || 'Data berhasil disimpan',
-                                confirmButtonColor: '#28a745'
-                            }).then(() => {
-                                loadAktivitas();
-                            });
-                        } else {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Gagal!',
-                                text: response.message || 'Terjadi kesalahan',
-                                confirmButtonColor: '#dc3545'
-                            });
-                        }
-                    },
-                    error: function(xhr) {
-                        if (xhr.status === 422 && xhr.responseJSON.errors) {
-                            const errors = xhr.responseJSON.errors;
-                            $.each(errors, function(key, value) {
-                                $(`#${key}`).addClass('is-invalid');
-                                $(`#${key}-error`).text(value[0]);
-                            });
+                    $.ajax({
+                        url: url,
+                        type: 'POST',
+                        data: formData,
+                        dataType: 'json',
+                        success: function(response) {
+                            if (response.status === 'success') {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Berhasil!',
+                                    text: response.message || 'Data berhasil disimpan',
+                                    confirmButtonColor: '#28a745'
+                                }).then(() => {
+                                    loadAktivitas();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Gagal!',
+                                    text: response.message || 'Terjadi kesalahan',
+                                    confirmButtonColor: '#dc3545'
+                                });
+                            }
+                        },
+                        error: function(xhr) {
                             Swal.close();
-                        } else {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Error!',
-                                text: xhr.responseJSON?.message ||
-                                    'Terjadi kesalahan saat menyimpan data',
-                                confirmButtonColor: '#dc3545'
-                            });
+                            
+                            if (xhr.status === 422 && xhr.responseJSON.errors) {
+                                // Buka kembali modal untuk menampilkan error
+                                $('#aktivitasModal').modal('show');
+                                
+                                // Tunggu modal terbuka, lalu tampilkan error
+                                setTimeout(() => {
+                                    const errors = xhr.responseJSON.errors;
+                                    $.each(errors, function(key, value) {
+                                        const element = $(`#${key}`);
+                                        if (element.hasClass('summernote')) {
+                                            element.next('.note-editor').addClass('is-invalid');
+                                        } else {
+                                            element.addClass('is-invalid');
+                                        }
+                                        $(`#${key}-error`).text(value[0]);
+                                    });
+                                    
+                                    // Scroll ke error pertama
+                                    const firstError = $('.is-invalid').first();
+                                    if (firstError.length) {
+                                        $('.modal-body').animate({
+                                            scrollTop: firstError.offset().top - $('.modal-body').offset().top + $('.modal-body').scrollTop() - 100
+                                        }, 300);
+                                    }
+                                }, 300);
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error!',
+                                    text: xhr.responseJSON?.message ||
+                                        'Terjadi kesalahan saat menyimpan data',
+                                    confirmButtonColor: '#dc3545'
+                                });
+                            }
                         }
-                    }
-                });
+                    });
+                }, 300); // Delay 300ms untuk animasi modal
             });
 
             // Detail button
@@ -550,7 +706,7 @@
                             $('#umkm_id').val(data.umkm_id);
                             $('#users_id').val(data.users_id);
 
-                            // Set nama petugas (bisa dari data yang ada atau tetap user login)
+                            // Set nama petugas
                             if (data.user && data.user.nama) {
                                 $('#users_name').val(data.user.nama);
                             }
@@ -563,10 +719,8 @@
 
                             // Set summernote after modal shown
                             setTimeout(() => {
-                                $('#aktivitas').summernote('code', data.aktivitas ||
-                                '');
-                                $('#permasalahan').summernote('code', data
-                                    .permasalahan || '');
+                                $('#aktivitas').summernote('code', data.aktivitas || '');
+                                $('#permasalahan').summernote('code', data.permasalahan || '');
                             }, 300);
                         }
                     },
@@ -667,6 +821,20 @@
     </script>
 
     <style>
+        /* Fix SweetAlert2 z-index above Bootstrap Modal - PERBAIKAN BUG */
+        .swal2-container {
+            z-index: 9999 !important;
+        }
+
+        /* Ensure modal backdrop doesn't cover SweetAlert */
+        .modal-backdrop {
+            z-index: 1040 !important;
+        }
+
+        .modal {
+            z-index: 1050 !important;
+        }
+
         /* Form Sections */
         .form-section {
             margin-bottom: 1.75rem;
@@ -852,12 +1020,19 @@
             display: block;
             margin-top: 0.25rem;
             font-size: 0.875rem;
+            font-weight: 500;
         }
 
         /* Summernote Customization */
         .note-editor.note-frame {
             border: 1.5px solid #e0e0e0;
             border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .note-editor.note-frame.is-invalid {
+            border-color: #dc3545 !important;
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.15);
         }
 
         .note-editor.note-frame .note-editing-area .note-editable {
