@@ -20,6 +20,6 @@ class KategoriUmkmModel extends Model
 
     public function umkm()
     {
-        return $this->hasOne(umkmModel::class, 'umkm_id');
+        return $this->hasOne(UmkmModel::class, 'umkm_id');
     }
 }
