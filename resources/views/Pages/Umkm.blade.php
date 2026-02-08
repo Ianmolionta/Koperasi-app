@@ -2,14 +2,17 @@
 @section('content')
     <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light"> <i class="menu-icon tf-icons bx bx-store"></i></span>
         UMKM</h4>
+    
     <div class="card">
         <div class="card-header d-flex align-items-center justify-content-between">
             <h5 class="mb-0">Data UMKM</h5>
+            @if (auth()->user()->role !== 'admin')
             <div>
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#basicModal">
                     <i class="bx bx-plus me-1"></i>Tambah Data
                 </button>
             </div>
+            @endif
         </div>
         <div class="card-body">
             <div class="table-responsive">
@@ -231,10 +234,14 @@
 @section('script')
     <script>
         $(document).ready(function() {
+            // ==================== USER ROLE & AUTHENTICATION ====================
             const currentUser = {
                 id: "{{ auth()->user()->id ?? '' }}",
-                nama: "{{ auth()->user()->nama ?? '' }}"
+                nama: "{{ auth()->user()->nama ?? '' }}",
+                role: "{{ auth()->user()->role ?? '' }}"
             };
+
+            const isAdmin = currentUser.role === 'admin';
 
             // ==================== VALIDATION SYSTEM ====================
             const ValidationRules = {
@@ -507,9 +514,16 @@
                             tableBody += "<td>" + (item.kategori_umkm ? item.kategori_umkm.nama_kategori : '-') + "</td>";
                             tableBody += "<td>" + item.jenis_umkm + "</td>";
                             tableBody += "<td class='text-center'>";
+                            
+                            // Tombol Detail - selalu ditampilkan untuk semua role
                             tableBody += "<button type='button' class='btn btn-outline-info btn-sm detail-btn me-1' data-id='" + item.id + "' title='Detail'><i class='bx bx-show'></i></button>";
-                            tableBody += "<button type='button' class='btn btn-outline-primary btn-sm edit-btn me-1' data-id='" + item.id + "' title='Edit'><i class='bx bx-pencil'></i></button>";
-                            tableBody += "<button type='button' class='btn btn-outline-danger btn-sm delete-confirm' data-id='" + item.id + "' title='Hapus'><i class='bx bx-trash'></i></button>";
+                            
+                            // Tombol Edit dan Hapus - hanya untuk non-admin
+                            if (!isAdmin) {
+                                tableBody += "<button type='button' class='btn btn-outline-primary btn-sm edit-btn me-1' data-id='" + item.id + "' title='Edit'><i class='bx bx-pencil'></i></button>";
+                                tableBody += "<button type='button' class='btn btn-outline-danger btn-sm delete-confirm' data-id='" + item.id + "' title='Hapus'><i class='bx bx-trash'></i></button>";
+                            }
+                            
                             tableBody += "</td>";
                             tableBody += "</tr>";
                         });
@@ -660,7 +674,12 @@
                     },
                     error: function(xhr, status, error) {
                         console.error('Error fetching detail data:', error);
-                        alert('Gagal mengambil detail data');
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Gagal',
+                            text: 'Gagal mengambil detail data',
+                            confirmButtonColor: '#dc3545'
+                        });
                     }
                 });
             });
@@ -668,6 +687,17 @@
             // Event handler untuk simpan data
             $(document).on('click', '#simpanData', function(e) {
                 e.preventDefault();
+
+                // Check role - admin tidak bisa simpan data
+                if (isAdmin) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Akses Ditolak',
+                        text: 'Anda tidak memiliki izin untuk melakukan aksi ini',
+                        confirmButtonColor: '#dc3545'
+                    });
+                    return false;
+                }
 
                 // Validasi form
                 if (!validateForm()) {
@@ -702,25 +732,53 @@
                                 modal.hide();
                             }
 
-                            alertSuccess('success', 'Data berhasil disimpan');
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Berhasil',
+                                text: 'Data berhasil disimpan',
+                                showConfirmButton: false,
+                                timer: 1500
+                            });
+                            
                             setTimeout(function() {
                                 location.reload();
                             }, 1500);
                         } else {
                             $('#simpanData').prop('disabled', false).html('<i class="bx bx-save me-1"></i>Simpan Data');
-                            alertError();
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Gagal',
+                                text: 'Terjadi kesalahan saat menyimpan data',
+                                confirmButtonColor: '#dc3545'
+                            });
                         }
                     },
                     error: function(xhr, status, error) {
                         console.error(xhr.responseText);
                         $('#simpanData').prop('disabled', false).html('<i class="bx bx-save me-1"></i>Simpan Data');
-                        alertError();
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Gagal',
+                            text: 'Terjadi kesalahan saat menyimpan data',
+                            confirmButtonColor: '#dc3545'
+                        });
                     }
                 });
             });
 
-            // Event handler untuk edit
+            // Event handler untuk edit - hanya untuk non-admin
             $(document).on('click', '.edit-btn', function() {
+                // Check role - admin tidak bisa edit
+                if (isAdmin) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Akses Ditolak',
+                        text: 'Admin tidak memiliki izin untuk mengedit data',
+                        confirmButtonColor: '#dc3545'
+                    });
+                    return false;
+                }
+
                 let id = $(this).data('id');
                 $.ajax({
                     url: `/v1/umkm/get/${id}`,
@@ -759,12 +817,29 @@
                     },
                     error: function(xhr, status, error) {
                         console.error('Error fetching data for edit:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Gagal',
+                            text: 'Gagal mengambil data untuk diedit',
+                            confirmButtonColor: '#dc3545'
+                        });
                     }
                 });
             });
 
             // Fungsi untuk delete data
             function deleteDataById(id) {
+                // Check role - admin tidak bisa delete
+                if (isAdmin) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Akses Ditolak',
+                        text: 'Admin tidak memiliki izin untuk menghapus data',
+                        confirmButtonColor: '#dc3545'
+                    });
+                    return false;
+                }
+
                 if (!id) {
                     console.error('ID tidak valid');
                     return;
@@ -775,30 +850,66 @@
                     url: `/v1/umkm/delete/${id}`,
                     success: function(response) {
                         if (response.status === 'success') {
-                            alertSuccess('Berhasil', 'Data berhasil dihapus');
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Berhasil',
+                                text: 'Data berhasil dihapus',
+                                showConfirmButton: false,
+                                timer: 1500
+                            });
+                            
                             setTimeout(function() {
                                 location.reload();
                             }, 1500);
                         } else {
-                            alertError('Gagal', 'Data gagal dihapus');
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Gagal',
+                                text: 'Data gagal dihapus',
+                                confirmButtonColor: '#dc3545'
+                            });
                         }
                     },
                     error: function(xhr) {
                         console.error(xhr.responseText);
-                        alertError();
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Gagal',
+                            text: 'Terjadi kesalahan saat menghapus data',
+                            confirmButtonColor: '#dc3545'
+                        });
                     }
                 });
             }
 
-            // Event handler untuk delete
+            // Event handler untuk delete - hanya untuk non-admin
             $(document).on('click', '.delete-confirm', function() {
+                // Check role - admin tidak bisa delete
+                if (isAdmin) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Akses Ditolak',
+                        text: 'Admin tidak memiliki izin untuk menghapus data',
+                        confirmButtonColor: '#dc3545'
+                    });
+                    return false;
+                }
+
                 const id = $(this).data('id');
-                alertConfirm(
-                    'Apakah Anda yakin ingin menghapus data?',
-                    function() {
+                Swal.fire({
+                    title: 'Konfirmasi Hapus',
+                    text: 'Apakah Anda yakin ingin menghapus data ini?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Ya, Hapus!',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
                         deleteDataById(id);
                     }
-                );
+                });
             });
 
             // Reset modal ketika ditutup
@@ -882,6 +993,12 @@
         .form-control,
         .form-select {
             transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+
+        /* Style untuk tombol yang di-disable (untuk admin) */
+        .btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
         }
     </style>
 @endsection

@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('username');
             $table->string('password');
             $table->string('jabatan');
-            $table->string('nip');
+            $table->string('nip')->nullable();
             $table->string('no_hp');
             $table->enum('role', ['superadmin', 'admin', 'mentor']);
             $table->rememberToken();

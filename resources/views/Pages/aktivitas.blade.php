@@ -4,15 +4,17 @@
         <span class="text-muted fw-light"><i class="menu-icon tf-icons bx bx-task"></i></span>
         Aktivitas UMKM
     </h4>
-
+    
     <div class="card">
         <div class="card-header d-flex align-items-center justify-content-between">
             <h5 class="mb-0">Data Aktivitas UMKM</h5>
+            @if (auth()->user()->role !== 'admin')
             <div>
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#aktivitasModal">
                     <i class="bx bx-plus me-1"></i>Tambah Aktivitas
                 </button>
             </div>
+            @endif
         </div>
         <div class="card-body">
             <div class="table-responsive">
@@ -43,7 +45,8 @@
                         <h5 class="modal-title mb-0 text-white" id="modalTitle">Tambah Aktivitas UMKM</h5>
                         <small class="text-white opacity-75">Isi formulir dengan lengkap dan benar</small>
                     </div>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4">
                     <form id="aktivitasForm" method="POST">
@@ -69,7 +72,7 @@
                                             <option value="">Pilih UMKM</option>
                                         </select>
                                     </div>
-                                    <small class="text-danger" id="umkm_id-error"></small>
+                                    <div class="invalid-feedback"></div>
                                 </div>
 
                                 <div class="col-md-6 mb-3">
@@ -86,7 +89,7 @@
                                     <small class="text-muted d-block mt-1">
                                         <i class="bx bx-info-circle"></i> Petugas diisi otomatis sesuai user yang login
                                     </small>
-                                    <small class="text-danger" id="users_id-error"></small>
+                                    <div class="invalid-feedback"></div>
                                 </div>
 
                                 <div class="col-md-6 mb-3">
@@ -104,7 +107,7 @@
                                             <option value="cw3">September - Desember</option>
                                         </select>
                                     </div>
-                                    <small class="text-danger" id="periode_catur_wulan-error"></small>
+                                    <div class="invalid-feedback"></div>
                                 </div>
 
                                 <div class="col-md-6 mb-3">
@@ -118,7 +121,7 @@
                                         <input type="date" class="form-control" id="tanggal_aktivitas"
                                             name="tanggal_aktivitas">
                                     </div>
-                                    <small class="text-danger" id="tanggal_aktivitas-error"></small>
+                                    <div class="invalid-feedback"></div>
                                 </div>
                             </div>
                         </div>
@@ -135,7 +138,7 @@
                                         Aktivitas <span class="text-danger">*</span>
                                     </label>
                                     <textarea id="aktivitas" name="aktivitas" class="form-control summernote"></textarea>
-                                    <small class="text-danger" id="aktivitas-error"></small>
+                                    <div class="invalid-feedback"></div>
                                 </div>
 
                                 <div class="col-12 mb-3">
@@ -143,7 +146,7 @@
                                         Permasalahan <span class="text-danger">*</span>
                                     </label>
                                     <textarea id="permasalahan" name="permasalahan" class="form-control summernote"></textarea>
-                                    <small class="text-danger" id="permasalahan-error"></small>
+                                    <div class="invalid-feedback"></div>
                                 </div>
                             </div>
                         </div>
@@ -255,16 +258,178 @@
 
     <script>
         $(document).ready(function() {
+            // ==================== USER ROLE & AUTHENTICATION ====================
+            const currentUser = {
+                id: "{{ auth()->user()->id ?? '' }}",
+                nama: "{{ auth()->user()->nama ?? '' }}",
+                role: "{{ auth()->user()->role ?? '' }}"
+            };
+
+            const isAdmin = currentUser.role === 'admin';
+
             let isEditMode = false;
             let currentAktivitasId = null;
 
-            // Data user yang sedang login (dari Laravel Auth)
-            const currentUser = {
-                id: "{{ auth()->user()->id ?? '' }}",
-                nama: "{{ auth()->user()->nama ?? '' }}"
+            // ==================== VALIDATION SYSTEM ====================
+            const ValidationRules = {
+                umkm_id: {
+                    required: true,
+                    messages: {
+                        required: 'Nama UMKM harus dipilih'
+                    }
+                },
+                users_id: {
+                    required: true,
+                    messages: {
+                        required: 'Petugas harus terisi'
+                    }
+                },
+                periode_catur_wulan: {
+                    required: true,
+                    messages: {
+                        required: 'Periode Catur Wulan harus dipilih'
+                    }
+                },
+                tanggal_aktivitas: {
+                    required: true,
+                    messages: {
+                        required: 'Tanggal Aktivitas harus diisi'
+                    }
+                },
+                aktivitas: {
+                    required: true,
+                    messages: {
+                        required: 'Aktivitas harus diisi'
+                    }
+                },
+                permasalahan: {
+                    required: true,
+                    messages: {
+                        required: 'Permasalahan harus diisi'
+                    }
+                }
             };
 
-            // Initialize Summernote
+            // Fungsi untuk set field state (valid/invalid)
+            function setFieldState(fieldName, isValid, message = '') {
+                const $field = $(`[name="${fieldName}"]`);
+                const $feedback = $field.siblings('.invalid-feedback');
+
+                // Remove previous states
+                $field.removeClass('is-invalid is-valid');
+
+                if (isValid) {
+                    $field.addClass('is-valid');
+                    $feedback.text('');
+                    
+                    // Untuk summernote
+                    if ($field.hasClass('summernote')) {
+                        $field.next('.note-editor').removeClass('is-invalid');
+                    }
+                } else {
+                    $field.addClass('is-invalid');
+                    $feedback.text(message);
+                    
+                    // Untuk summernote
+                    if ($field.hasClass('summernote')) {
+                        $field.next('.note-editor').addClass('is-invalid');
+                    }
+                }
+            }
+
+            // Fungsi untuk clear field state
+            function clearFieldState(fieldName) {
+                const $field = $(`[name="${fieldName}"]`);
+                const $feedback = $field.siblings('.invalid-feedback');
+                
+                $field.removeClass('is-invalid is-valid');
+                $feedback.text('');
+                
+                // Untuk summernote
+                if ($field.hasClass('summernote')) {
+                    $field.next('.note-editor').removeClass('is-invalid');
+                }
+            }
+
+            // Fungsi untuk clear semua validation errors
+            function clearAllFieldStates() {
+                $('#aktivitasForm input, #aktivitasForm select, #aktivitasForm textarea').each(function() {
+                    const fieldName = $(this).attr('name');
+                    if (fieldName && fieldName !== '_token') {
+                        clearFieldState(fieldName);
+                    }
+                });
+            }
+
+            // Strip HTML tags untuk validasi dan preview
+            function stripHtml(html) {
+                let tmp = document.createElement("DIV");
+                tmp.innerHTML = html;
+                let text = tmp.textContent || tmp.innerText || "";
+                return text.trim();
+            }
+
+            // Validasi form sebelum submit
+            function validateForm() {
+                let isValid = true;
+                clearAllFieldStates();
+
+                // Validasi select dan input biasa
+                for (let fieldName in ValidationRules) {
+                    if (fieldName === 'aktivitas' || fieldName === 'permasalahan') continue;
+                    
+                    const $field = $(`[name="${fieldName}"]`);
+                    const value = $field.val();
+                    
+                    if (!value || value.trim() === '') {
+                        setFieldState(fieldName, false, ValidationRules[fieldName].messages.required);
+                        isValid = false;
+                    } else {
+                        setFieldState(fieldName, true);
+                    }
+                }
+
+                // Validasi Aktivitas (Summernote)
+                const aktivitasContent = $('#aktivitas').summernote('code');
+                const aktivitasText = stripHtml(aktivitasContent);
+                if (!aktivitasText || aktivitasText === '') {
+                    setFieldState('aktivitas', false, ValidationRules.aktivitas.messages.required);
+                    isValid = false;
+                } else {
+                    setFieldState('aktivitas', true);
+                }
+
+                // Validasi Permasalahan (Summernote)
+                const permasalahanContent = $('#permasalahan').summernote('code');
+                const permasalahanText = stripHtml(permasalahanContent);
+                if (!permasalahanText || permasalahanText === '') {
+                    setFieldState('permasalahan', false, ValidationRules.permasalahan.messages.required);
+                    isValid = false;
+                } else {
+                    setFieldState('permasalahan', true);
+                }
+
+                return isValid;
+            }
+
+            // Real-time validation
+            $('#umkm_id, #periode_catur_wulan, #tanggal_aktivitas').on('change', function() {
+                const fieldName = $(this).attr('name');
+                if ($(this).val()) {
+                    clearFieldState(fieldName);
+                }
+            });
+
+            $('#aktivitas, #permasalahan').on('summernote.change', function() {
+                const fieldName = $(this).attr('name');
+                const content = $(this).summernote('code');
+                const text = stripHtml(content);
+                if (text && text !== '') {
+                    clearFieldState(fieldName);
+                }
+            });
+
+            // ==================== SUMMERNOTE ====================
             function initSummernote() {
                 $('.summernote').summernote({
                     height: 200,
@@ -282,7 +447,7 @@
                 });
             }
 
-            // Initialize DataTable
+            // ==================== DATA TABLE ====================
             const table = $('#aktivitasTable').DataTable({
                 processing: true,
                 order: [[4, 'desc']], // Sort by tanggal
@@ -302,6 +467,8 @@
                 }
             });
 
+            // ==================== HELPER FUNCTIONS ====================
+            
             // Load UMKM options
             function loadUmkmOptions() {
                 $.ajax({
@@ -327,78 +494,15 @@
                 }
             }
 
-            // Clear all validation errors
-            function clearValidationErrors() {
-                // Clear error messages
-                $('.text-danger[id$="-error"]').text('');
-                
-                // Remove invalid class from form controls
-                $('.form-control, .form-select').removeClass('is-invalid');
-                
-                // Remove invalid class from summernote
-                $('.note-editor').removeClass('is-invalid');
-            }
-
-            // Strip HTML tags untuk preview
-            function stripHtml(html) {
-                let tmp = document.createElement("DIV");
-                tmp.innerHTML = html;
-                let text = tmp.textContent || tmp.innerText || "";
-                return text.length > 100 ? text.substring(0, 100) + '...' : text;
-            }
-
-            // Validasi form sebelum submit
-            function validateForm() {
-                let isValid = true;
-                clearValidationErrors();
-
-                // Validasi Nama UMKM
-                if (!$('#umkm_id').val()) {
-                    $('#umkm_id').addClass('is-invalid');
-                    $('#umkm_id-error').text('Nama UMKM harus dipilih');
-                    isValid = false;
-                }
-
-                // Validasi Petugas
-                if (!$('#users_id').val()) {
-                    $('#users_name').addClass('is-invalid');
-                    $('#users_id-error').text('Petugas harus terisi');
-                    isValid = false;
-                }
-
-                // Validasi Periode Catur Wulan
-                if (!$('#periode_catur_wulan').val()) {
-                    $('#periode_catur_wulan').addClass('is-invalid');
-                    $('#periode_catur_wulan-error').text('Periode Catur Wulan harus dipilih');
-                    isValid = false;
-                }
-
-                // Validasi Tanggal Aktivitas
-                if (!$('#tanggal_aktivitas').val()) {
-                    $('#tanggal_aktivitas').addClass('is-invalid');
-                    $('#tanggal_aktivitas-error').text('Tanggal Aktivitas harus diisi');
-                    isValid = false;
-                }
-
-                // Validasi Aktivitas
-                const aktivitasContent = $('#aktivitas').summernote('code');
-                const aktivitasText = stripHtml(aktivitasContent).trim();
-                if (!aktivitasText || aktivitasText === '') {
-                    $('#aktivitas').next('.note-editor').addClass('is-invalid');
-                    $('#aktivitas-error').text('Aktivitas harus diisi');
-                    isValid = false;
-                }
-
-                // Validasi Permasalahan
-                const permasalahanContent = $('#permasalahan').summernote('code');
-                const permasalahanText = stripHtml(permasalahanContent).trim();
-                if (!permasalahanText || permasalahanText === '') {
-                    $('#permasalahan').next('.note-editor').addClass('is-invalid');
-                    $('#permasalahan-error').text('Permasalahan harus diisi');
-                    isValid = false;
-                }
-
-                return isValid;
+            // Helper function format date
+            function formatDate(dateString) {
+                if (!dateString) return '-';
+                const date = new Date(dateString);
+                return date.toLocaleDateString('id-ID', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
             }
 
             // Load data aktivitas
@@ -415,20 +519,28 @@
                                 const namaUmkm = item.umkm?.nama_umkm || '-';
                                 const namaPetugas = item.user?.nama || '-';
                                 const ringkasan = stripHtml(item.aktivitas || '-');
+                                const ringkasanShort = ringkasan.length > 100 ? ringkasan.substring(0, 100) + '...' : ringkasan;
 
-                                const actions = `
+                                let actions = `
                                     <div class="btn-group btn-group-sm" role="group">
                                         <button type="button" class="btn btn-info btn-detail" data-id="${item.id}" title="Detail">
                                             <i class="bx bx-show"></i>
                                         </button>
+                                `;
+
+                                // Tombol Edit dan Hapus - hanya untuk non-admin
+                                if (!isAdmin) {
+                                    actions += `
                                         <button type="button" class="btn btn-warning btn-edit" data-id="${item.id}" title="Edit">
                                             <i class="bx bx-edit"></i>
                                         </button>
                                         <button type="button" class="btn btn-danger btn-delete" data-id="${item.id}" title="Hapus">
                                             <i class="bx bx-trash"></i>
                                         </button>
-                                    </div>
-                                `;
+                                    `;
+                                }
+
+                                actions += `</div>`;
 
                                 table.row.add([
                                     index + 1,
@@ -436,7 +548,7 @@
                                     namaPetugas,
                                     item.periode_catur_wulan || '-',
                                     formatDate(item.tanggal_aktivitas),
-                                    ringkasan,
+                                    ringkasanShort,
                                     actions
                                 ]);
                             });
@@ -458,10 +570,9 @@
 
             // Reset form modal
             function resetForm() {
-                // Reset form HTML
                 $('#aktivitasForm')[0].reset();
                 $('#aktivitasId').val('');
-                
+
                 // Reset summernote
                 if ($('#aktivitas').data('summernote')) {
                     $('#aktivitas').summernote('code', '');
@@ -469,10 +580,10 @@
                 if ($('#permasalahan').data('summernote')) {
                     $('#permasalahan').summernote('code', '');
                 }
-                
-                // Clear validation errors
-                clearValidationErrors();
-                
+
+                // Clear validation
+                clearAllFieldStates();
+
                 // Reset mode
                 isEditMode = false;
                 currentAktivitasId = null;
@@ -481,6 +592,8 @@
                 // Set current user sebagai petugas
                 setCurrentUserAsPetugas();
             }
+
+            // ==================== EVENT HANDLERS ====================
 
             // Show modal tambah
             $('#aktivitasModal').on('show.bs.modal', function() {
@@ -492,69 +605,35 @@
 
             // Reset form when modal closes
             $('#aktivitasModal').on('hidden.bs.modal', function() {
-                // Destroy summernote
                 if ($('#aktivitas').data('summernote')) {
                     $('#aktivitas').summernote('destroy');
                 }
                 if ($('#permasalahan').data('summernote')) {
                     $('#permasalahan').summernote('destroy');
                 }
-                
-                // Reset form completely
                 resetForm();
             });
 
-            // Real-time validation - hapus error saat field diisi
-            $('#umkm_id').on('change', function() {
-                if ($(this).val()) {
-                    $(this).removeClass('is-invalid');
-                    $('#umkm_id-error').text('');
-                }
-            });
-
-            $('#periode_catur_wulan').on('change', function() {
-                if ($(this).val()) {
-                    $(this).removeClass('is-invalid');
-                    $('#periode_catur_wulan-error').text('');
-                }
-            });
-
-            $('#tanggal_aktivitas').on('change', function() {
-                if ($(this).val()) {
-                    $(this).removeClass('is-invalid');
-                    $('#tanggal_aktivitas-error').text('');
-                }
-            });
-
-            // Real-time validation untuk summernote
-            $('#aktivitas').on('summernote.change', function() {
-                const content = $(this).summernote('code');
-                const text = stripHtml(content).trim();
-                if (text && text !== '') {
-                    $(this).next('.note-editor').removeClass('is-invalid');
-                    $('#aktivitas-error').text('');
-                }
-            });
-
-            $('#permasalahan').on('summernote.change', function() {
-                const content = $(this).summernote('code');
-                const text = stripHtml(content).trim();
-                if (text && text !== '') {
-                    $(this).next('.note-editor').removeClass('is-invalid');
-                    $('#permasalahan-error').text('');
-                }
-            });
-
-            // Save data - FIXED VERSION
+            // Save data
             $('#saveBtn').click(function() {
-                // Validasi form terlebih dahulu
+                // Check role - admin tidak bisa simpan
+                if (isAdmin) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Akses Ditolak',
+                        text: 'Anda tidak memiliki izin untuk melakukan aksi ini',
+                        confirmButtonColor: '#dc3545'
+                    });
+                    return false;
+                }
+
+                // Validasi form
                 if (!validateForm()) {
                     const firstError = $('.is-invalid').first();
                     if (firstError.length) {
-                        $('html, body').animate({
-                            scrollTop: firstError.offset().top - 100
+                        $('.modal-body').animate({
+                            scrollTop: firstError.offset().top - $('.modal-body').offset().top + $('.modal-body').scrollTop() - 100
                         }, 300);
-                        firstError.focus();
                     }
                     return;
                 }
@@ -569,13 +648,11 @@
                     _token: $('meta[name="csrf-token"]').attr('content')
                 };
 
-                const url = isEditMode ? `/v1/aktivitas/update/${currentAktivitasId}` :
-                    '/v1/aktivitas/create';
+                const url = isEditMode ? `/v1/aktivitas/update/${currentAktivitasId}` : '/v1/aktivitas/create';
 
-                // Tutup modal terlebih dahulu
+                // Tutup modal dan tampilkan loading
                 $('#aktivitasModal').modal('hide');
-                
-                // Tunggu animasi modal selesai
+
                 setTimeout(() => {
                     Swal.fire({
                         title: 'Menyimpan...',
@@ -613,44 +690,25 @@
                         },
                         error: function(xhr) {
                             Swal.close();
-                            
                             if (xhr.status === 422 && xhr.responseJSON.errors) {
-                                // Buka kembali modal untuk menampilkan error
                                 $('#aktivitasModal').modal('show');
-                                
-                                // Tunggu modal terbuka, lalu tampilkan error
                                 setTimeout(() => {
                                     const errors = xhr.responseJSON.errors;
                                     $.each(errors, function(key, value) {
-                                        const element = $(`#${key}`);
-                                        if (element.hasClass('summernote')) {
-                                            element.next('.note-editor').addClass('is-invalid');
-                                        } else {
-                                            element.addClass('is-invalid');
-                                        }
-                                        $(`#${key}-error`).text(value[0]);
+                                        setFieldState(key, false, value[0]);
                                     });
-                                    
-                                    // Scroll ke error pertama
-                                    const firstError = $('.is-invalid').first();
-                                    if (firstError.length) {
-                                        $('.modal-body').animate({
-                                            scrollTop: firstError.offset().top - $('.modal-body').offset().top + $('.modal-body').scrollTop() - 100
-                                        }, 300);
-                                    }
                                 }, 300);
                             } else {
                                 Swal.fire({
                                     icon: 'error',
                                     title: 'Error!',
-                                    text: xhr.responseJSON?.message ||
-                                        'Terjadi kesalahan saat menyimpan data',
+                                    text: xhr.responseJSON?.message || 'Terjadi kesalahan saat menyimpan data',
                                     confirmButtonColor: '#dc3545'
                                 });
                             }
                         }
                     });
-                }, 300); // Delay 300ms untuk animasi modal
+                }, 300);
             });
 
             // Detail button
@@ -669,10 +727,8 @@
                             $('#detailPetugas').text(data.user?.nama || '-');
                             $('#detailPeriode').text(data.periode_catur_wulan || '-');
                             $('#detailTanggal').text(formatDate(data.tanggal_aktivitas));
-                            $('#detailAktivitas').html(data.aktivitas ||
-                                '<p class="text-muted">Tidak ada data</p>');
-                            $('#detailPermasalahan').html(data.permasalahan ||
-                                '<p class="text-muted">Tidak ada data</p>');
+                            $('#detailAktivitas').html(data.aktivitas || '<p class="text-muted">Tidak ada data</p>');
+                            $('#detailPermasalahan').html(data.permasalahan || '<p class="text-muted">Tidak ada data</p>');
 
                             $('#detailModal').modal('show');
                         }
@@ -688,8 +744,19 @@
                 });
             });
 
-            // Edit button
+            // Edit button - hanya untuk non-admin
             $(document).on('click', '.btn-edit', function() {
+                // Check role
+                if (isAdmin) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Akses Ditolak',
+                        text: 'Admin tidak memiliki izin untuk mengedit data',
+                        confirmButtonColor: '#dc3545'
+                    });
+                    return false;
+                }
+
                 const aktivitasId = $(this).data('id');
                 currentAktivitasId = aktivitasId;
                 isEditMode = true;
@@ -706,7 +773,6 @@
                             $('#umkm_id').val(data.umkm_id);
                             $('#users_id').val(data.users_id);
 
-                            // Set nama petugas
                             if (data.user && data.user.nama) {
                                 $('#users_name').val(data.user.nama);
                             }
@@ -717,7 +783,6 @@
                             $('#modalTitle').text('Edit Aktivitas UMKM');
                             $('#aktivitasModal').modal('show');
 
-                            // Set summernote after modal shown
                             setTimeout(() => {
                                 $('#aktivitas').summernote('code', data.aktivitas || '');
                                 $('#permasalahan').summernote('code', data.permasalahan || '');
@@ -735,8 +800,19 @@
                 });
             });
 
-            // Delete button
+            // Delete button - hanya untuk non-admin
             $(document).on('click', '.btn-delete', function() {
+                // Check role
+                if (isAdmin) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Akses Ditolak',
+                        text: 'Admin tidak memiliki izin untuk menghapus data',
+                        confirmButtonColor: '#dc3545'
+                    });
+                    return false;
+                }
+
                 const aktivitasId = $(this).data('id');
 
                 Swal.fire({
@@ -772,8 +848,7 @@
                                     Swal.fire({
                                         icon: 'success',
                                         title: 'Terhapus!',
-                                        text: response.message ||
-                                            'Data berhasil dihapus',
+                                        text: response.message || 'Data berhasil dihapus',
                                         confirmButtonColor: '#28a745'
                                     }).then(() => {
                                         loadAktivitas();
@@ -782,8 +857,7 @@
                                     Swal.fire({
                                         icon: 'error',
                                         title: 'Gagal!',
-                                        text: response.message ||
-                                            'Gagal menghapus data',
+                                        text: response.message || 'Gagal menghapus data',
                                         confirmButtonColor: '#dc3545'
                                     });
                                 }
@@ -792,8 +866,7 @@
                                 Swal.fire({
                                     icon: 'error',
                                     title: 'Error!',
-                                    text: xhr.responseJSON?.message ||
-                                        'Terjadi kesalahan saat menghapus data',
+                                    text: xhr.responseJSON?.message || 'Terjadi kesalahan saat menghapus data',
                                     confirmButtonColor: '#dc3545'
                                 });
                             }
@@ -801,17 +874,6 @@
                     }
                 });
             });
-
-            // Helper function format date
-            function formatDate(dateString) {
-                if (!dateString) return '-';
-                const date = new Date(dateString);
-                return date.toLocaleDateString('id-ID', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                });
-            }
 
             // Initial load
             loadUmkmOptions();
@@ -821,12 +883,11 @@
     </script>
 
     <style>
-        /* Fix SweetAlert2 z-index above Bootstrap Modal - PERBAIKAN BUG */
+        /* Fix SweetAlert2 z-index above Bootstrap Modal */
         .swal2-container {
             z-index: 9999 !important;
         }
 
-        /* Ensure modal backdrop doesn't cover SweetAlert */
         .modal-backdrop {
             z-index: 1040 !important;
         }
@@ -899,7 +960,6 @@
             border-radius: 0 8px 8px 0;
         }
 
-        /* Readonly styling untuk field petugas */
         .form-control.bg-light[readonly] {
             background-color: #f8f9fa !important;
             cursor: not-allowed;
@@ -1016,11 +1076,11 @@
             border-color: #dc3545 !important;
         }
 
-        small.text-danger {
+        .invalid-feedback {
             display: block;
             margin-top: 0.25rem;
             font-size: 0.875rem;
-            font-weight: 500;
+            color: #dc3545;
         }
 
         /* Summernote Customization */
@@ -1057,6 +1117,12 @@
 
         .content-area::-webkit-scrollbar-thumb:hover {
             background: #c82333;
+        }
+
+        /* Smooth transition */
+        .form-control,
+        .form-select {
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
         }
     </style>
 @endsection
