@@ -923,7 +923,7 @@
 
         /* Primary Theme */
         .bg-gradient-primary {
-            background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
         }
 
         .bg-light-primary {
