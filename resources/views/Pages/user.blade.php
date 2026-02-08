@@ -1,4 +1,4 @@
-@extends('Layouts.base')
+@extends('Layouts.Base')
 @section('content')
     <h4 class="fw-bold py-3 mb-4">
         <span class="text-muted fw-light"><i class="menu-icon tf-icons bx bx-user"></i></span>
