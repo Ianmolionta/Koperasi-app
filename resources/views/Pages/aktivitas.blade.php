@@ -454,7 +454,15 @@
                 language: {
                     search: "Pencarian:",
                     lengthMenu: "Tampilkan _MENU_ data per halaman",
-                    zeroRecords: "Data tidak ditemukan",
+                    zeroRecords: `
+                        <div class="text-center py-4">
+                            <div class="mb-3">
+                                <i class="bx bx-data bx-lg text-muted"></i>
+                            </div>
+                            <h6 class="text-muted">Data Tidak Tersedia</h6>
+                            <p class="text-muted small mb-0">Belum ada data aktivitas yang ditambahkan</p>
+                        </div>
+                    `,
                     info: "Menampilkan halaman _PAGE_ dari _PAGES_",
                     infoEmpty: "Tidak ada data yang tersedia",
                     infoFiltered: "(difilter dari _MAX_ total data)",

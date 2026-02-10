@@ -22,7 +22,6 @@
                             <th>No</th>
                             <th>Nama</th>
                             <th>Username</th>
-                            <th>NIP</th>
                             <th>Jabatan</th>
                             <th>No. HP</th>
                             <th>Role</th>
@@ -70,20 +69,6 @@
                                                placeholder="Masukkan nama lengkap">
                                     </div>
                                     <small class="text-danger error-message" id="nama-error"></small>
-                                </div>
-
-                                <div class="col-md-6 mb-3">
-                                    <label for="nip" class="form-label fw-semibold">
-                                        NIP <span class="text-danger">*</span>
-                                    </label>
-                                    <div class="input-group">
-                                        <span class="input-group-text bg-light">
-                                            <i class="bx bx-id-card text-primary"></i>
-                                        </span>
-                                        <input type="text" class="form-control" id="nip" name="nip" 
-                                               placeholder="Masukkan NIP">
-                                    </div>
-                                    <small class="text-danger error-message" id="nip-error"></small>
                                 </div>
 
                                 <div class="col-md-6 mb-3">
@@ -215,12 +200,6 @@
                                         </tr>
                                         <tr>
                                             <td class="text-muted">
-                                                <i class="bx bx-id-card text-primary me-1"></i>NIP
-                                            </td>
-                                            <td class="fw-bold" id="detailNip">-</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="text-muted">
                                                 <i class="bx bx-briefcase text-primary me-1"></i>Jabatan
                                             </td>
                                             <td class="fw-bold" id="detailJabatan">-</td>
@@ -299,7 +278,15 @@
                 language: {
                     search: "Pencarian:",
                     lengthMenu: "Tampilkan _MENU_ data per halaman",
-                    zeroRecords: "Data tidak ditemukan",
+                    zeroRecords: `
+                        <div class="text-center py-4">
+                            <div class="mb-3">
+                                <i class="bx bx-data bx-lg text-muted"></i>
+                            </div>
+                            <h6 class="text-muted">Data Tidak Tersedia</h6>
+                            <p class="text-muted small mb-0">Belum ada data aktivitas yang ditambahkan</p>
+                        </div>
+                    `,
                     info: "Menampilkan halaman _PAGE_ dari _PAGES_",
                     infoEmpty: "Tidak ada data yang tersedia",
                     infoFiltered: "(difilter dari _MAX_ total data)",
@@ -336,19 +323,6 @@
                             isValid = false;
                         } else if (value.length < 3) {
                             errorMsg = 'Nama lengkap minimal 3 karakter';
-                            isValid = false;
-                        }
-                        break;
-
-                    case 'nip':
-                        if (!value) {
-                            errorMsg = 'NIP wajib diisi';
-                            isValid = false;
-                        } else if (!/^\d+$/.test(value)) {
-                            errorMsg = 'NIP harus berupa angka';
-                            isValid = false;
-                        } else if (value.length < 8) {
-                            errorMsg = 'NIP minimal 8 digit';
                             isValid = false;
                         }
                         break;
@@ -423,7 +397,7 @@
                 formTouched = true; // Set flag bahwa form sudah disentuh
                 
                 let isValid = true;
-                const fields = ['nama', 'nip', 'jabatan', 'no_hp', 'username', 'password', 'role'];
+                const fields = ['nama', 'jabatan', 'no_hp', 'username', 'password', 'role'];
                 
                 fields.forEach(fieldId => {
                     if (!validateField(fieldId)) {
@@ -465,7 +439,6 @@
                                     index + 1,
                                     user.nama || '-',
                                     user.username || '-',
-                                    user.nip || '-',
                                     user.jabatan || '-',
                                     user.no_hp || '-',
                                     roleBadge,
@@ -547,12 +520,6 @@
                 }
             });
 
-            $('#nip').on('input blur', function() {
-                if (formTouched) {
-                    validateField('nip');
-                }
-            });
-
             $('#jabatan').on('input blur', function() {
                 if (formTouched) {
                     validateField('jabatan');
@@ -597,7 +564,6 @@
                     username: $('#username').val().trim(),
                     password: $('#password').val(),
                     jabatan: $('#jabatan').val().trim(),
-                    nip: $('#nip').val().trim(),
                     no_hp: $('#no_hp').val().trim(),
                     role: $('#role').val().trim(),
                     _token: $('meta[name="csrf-token"]').attr('content')
@@ -692,7 +658,6 @@
                             const user = response.data;
                             
                             $('#detailNama').text(user.nama || '-');
-                            $('#detailNip').text(user.nip || '-');
                             $('#detailJabatan').text(user.jabatan || '-');
                             $('#detailNoHp').text(user.no_hp || '-');
                             $('#detailUsername').text(user.username || '-');
@@ -732,7 +697,6 @@
                             $('#nama').val(user.nama);
                             $('#username').val(user.username);
                             $('#jabatan').val(user.jabatan);
-                            $('#nip').val(user.nip);
                             $('#no_hp').val(user.no_hp);
                             $('#role').val(user.role);
                             
