@@ -35,8 +35,8 @@
     </div>
 
     <!-- ═══════════════════════════════════════════
-                         Modal Form Tambah/Edit
-                         ═══════════════════════════════════════════ -->
+                             Modal Form Tambah/Edit
+                             ═══════════════════════════════════════════ -->
     <div class="modal fade" id="basicModal" tabindex="-1" aria-hidden="true" aria-labelledby="basicModalLable">
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
@@ -220,8 +220,8 @@
     </div>
 
     <!-- ═══════════════════════════════════════════
-                         Modal Detail Peminjaman
-                         ═══════════════════════════════════════════ -->
+                             Modal Detail Peminjaman
+                             ═══════════════════════════════════════════ -->
     <div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-xl">
             <div class="modal-content detail-modal-redwhite">
@@ -473,8 +473,8 @@
     </div>
 
     <!-- ═══════════════════════════════════════════
-    Modal Preview Invoice  ← BARU
-    ═══════════════════════════════════════════ -->
+        Modal Preview Invoice  ← BARU
+        ═══════════════════════════════════════════ -->
     <div class="modal fade" id="invoicePreviewModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered invoice-preview-dialog">
             <div class="modal-content invoice-preview-modal-content">
@@ -524,8 +524,8 @@
     </div>
 
     <!-- ═══════════════════════════════════════════
-    Invoice Template — tersembunyi, diisi JS
-    ═══════════════════════════════════════════ -->
+        Invoice Template — tersembunyi, diisi JS
+        ═══════════════════════════════════════════ -->
     <div id="invoiceTemplate" class="invoice-template-hidden">
 
         <!-- TOP BAR -->
@@ -641,7 +641,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-    <script>
+<script>
         $(document).ready(function() {
             let currentPeminjamanId = null;
 
@@ -672,23 +672,30 @@
             let lastInvoiceCanvas = null;
 
             // =============================================
-            // jQuery Validation
+            // jQuery Validation - Konfigurasi Global
             // =============================================
             $.validator.setDefaults({
-                errorElement: 'small',
-                errorClass: 'text-danger',
+                errorElement: 'div',
+                errorClass: 'invalid-feedback',
+                errorPlacement: function(error, element) {
+                    // Hapus error lama jika ada
+                    element.closest('.mb-3').find('.invalid-feedback').remove();
+                    error.insertAfter(element);
+                },
                 highlight: function(element) {
-                    $(element).addClass('is-invalid');
+                    $(element).addClass('is-invalid').removeClass('is-valid');
                 },
                 unhighlight: function(element) {
-                    $(element).removeClass('is-invalid');
+                    $(element).removeClass('is-invalid').addClass('is-valid');
                 },
-                errorPlacement: function(error, element) {
-                    error.insertAfter(element);
+                success: function(label, element) {
+                    $(element).removeClass('is-invalid').addClass('is-valid');
+                    label.remove();
                 }
             });
 
-            $("#upsertDataForm").validate({
+            // Inisialisasi validasi form
+            const formValidator = $("#upsertDataForm").validate({
                 rules: {
                     umkm_id: {
                         required: true
@@ -697,18 +704,20 @@
                         required: true
                     },
                     catatan: {
-                        required: true
+                        required: true,
+                        minlength: 10
                     }
                 },
                 messages: {
                     umkm_id: {
-                        required: "Nama UMKM wajib diisi"
+                        required: "Silakan pilih UMKM terlebih dahulu"
                     },
                     jumlah_pinjaman: {
-                        required: "Jumlah Pinjaman wajib dipilih"
+                        required: "Silakan pilih jumlah pinjaman"
                     },
                     catatan: {
-                        required: "Catatan wajib diisi"
+                        required: "Catatan wajib diisi",
+                        minlength: "Catatan minimal 10 karakter"
                     }
                 }
             });
@@ -758,6 +767,39 @@
                 return CATEGORY_BADGE_CLASS[(category || '').toLowerCase().trim()] || 'badge bg-secondary';
             }
 
+            /**
+             * Fungsi untuk membersihkan semua pesan error manual
+             */
+            function clearManualErrors() {
+                // Remove validation classes
+                $('.is-invalid').removeClass('is-invalid');
+                $('.is-valid').removeClass('is-valid');
+                
+                // Remove error messages
+                $('.invalid-feedback').remove();
+                $('.text-danger').remove();
+                
+                // Remove any inline error text
+                $('small.text-danger').remove();
+                
+                // Clear any error styling on inputs
+                $('.form-control, .form-select').css('border-color', '');
+            }
+
+            /**
+             * Fungsi untuk menampilkan error pada field tertentu
+             */
+            function showFieldError(fieldName, message) {
+                const $field = $('[name="' + fieldName + '"]');
+                $field.addClass('is-invalid');
+                
+                // Hapus error lama jika ada
+                $field.closest('.mb-3').find('.invalid-feedback').remove();
+                
+                // Tambah error baru
+                $field.after('<div class="invalid-feedback d-block">' + message + '</div>');
+            }
+
             // =============================================
             // CEK PINJAMAN AKTIF
             // =============================================
@@ -796,8 +838,8 @@
                     $('#umkmCategoryPlaceholder').removeClass('d-none').html(
                         '<i class="bx bx-error-circle"></i><span class="text-danger">Limit UMKM tidak ditemukan</span>'
                     );
-                    $('#jumlah_pinjaman').html('<option value="">Limit tidak ditemukan</option>').prop('disabled',
-                        true);
+                    $('#jumlah_pinjaman').html('<option value="">Limit tidak ditemukan</option>').prop(
+                        'disabled', true);
                     $('#jumlahPinjamanHint').hide();
                     $('#loanPercentageBox').addClass('d-none');
                     $('#estimasiBox').addClass('d-none');
@@ -920,6 +962,10 @@
             // CHANGE: UMKM dipilih
             // =============================================
             $('#umkm_id').on('change', function() {
+                // Clear error saat user mulai mengisi
+                $(this).removeClass('is-invalid').addClass('is-valid');
+                $(this).closest('.mb-3').find('.invalid-feedback').remove();
+                
                 const selectedId = $(this).val();
                 if (!selectedId) {
                     currentLimitData = null;
@@ -988,20 +1034,43 @@
             // CHANGE: Pilihan pinjaman
             // =============================================
             $('#jumlah_pinjaman').on('change', function() {
+                // Clear error saat user mulai mengisi
+                $(this).removeClass('is-invalid').addClass('is-valid');
+                $(this).closest('.mb-3').find('.invalid-feedback').remove();
+                
                 const selectedAmount = parseFloat($(this).val()) || 0;
-                const limitAktif = currentLimitData ? (parseFloat(currentLimitData.limit_saat_ini) || 0) :
-                    0;
+                const limitAktif = currentLimitData ? (parseFloat(currentLimitData.limit_saat_ini) || 0) : 0;
                 updateLoanProgress(selectedAmount, limitAktif);
                 updateEstimasi(selectedAmount);
+            });
+
+            // =============================================
+            // CHANGE: Catatan
+            // =============================================
+            $('#catatan').on('input', function() {
+                // Clear error saat user mulai mengisi
+                $(this).removeClass('is-invalid').addClass('is-valid');
+                $(this).closest('.mb-3').find('.invalid-feedback').remove();
             });
 
             // =============================================
             // RESET FORM
             // =============================================
             $('#basicModal').on('show.bs.modal', function() {
+                // Reset form
                 $('#upsertDataForm')[0].reset();
                 $('#id').val('');
                 $('#modalTitle').text('Tambah Peminjaman');
+                
+                // Reset validasi
+                if (formValidator) {
+                    formValidator.resetForm();
+                }
+                
+                // Clear semua error
+                clearManualErrors();
+                
+                // Reset tampilan
                 currentLimitData = null;
                 $('#umkmCategoryInfo').addClass('d-none');
                 $('#umkmCategoryPlaceholder').removeClass('d-none').html(
@@ -1013,7 +1082,48 @@
                 $('#jumlahPinjamanHint').hide();
                 $('#loanPercentageBox').addClass('d-none');
                 $('#estimasiBox').addClass('d-none');
-                $('#upsertDataForm').validate().resetForm();
+            });
+
+            // Event saat modal ditutup (hidden.bs.modal)
+            $('#basicModal').on('hidden.bs.modal', function() {
+                // Reset form
+                $('#upsertDataForm')[0].reset();
+                
+                // Reset validasi
+                if (formValidator) {
+                    formValidator.resetForm();
+                }
+                
+                // Clear semua error dan validasi visual
+                clearManualErrors();
+                
+                // Remove all validation classes
+                $('#upsertDataForm').find('.is-invalid, .is-valid').removeClass('is-invalid is-valid');
+                
+                // Reset tampilan ke default
+                currentLimitData = null;
+                $('#umkmCategoryInfo').addClass('d-none');
+                $('#umkmCategoryPlaceholder').removeClass('d-none').html(
+                    '<i class="bx bx-info-circle"></i><span>Pilih UMKM untuk melihat informasi</span>'
+                );
+                $('#alertPinjamanAktif').addClass('d-none');
+                $('#jumlah_pinjaman').html('<option value="">Pilih UMKM terlebih dahulu</option>').prop(
+                    'disabled', true);
+                $('#jumlahPinjamanHint').hide();
+                $('#loanPercentageBox').addClass('d-none');
+                $('#estimasiBox').addClass('d-none');
+                
+                // Reset select options ke default
+                $('#umkm_id').val('').trigger('change.select2'); // jika pakai select2
+            });
+
+            // Handler untuk tombol close/cancel (opsional - double safety)
+            $('#basicModal').on('click', '[data-bs-dismiss="modal"]', function() {
+                // Trigger manual reset
+                clearManualErrors();
+                if (formValidator) {
+                    formValidator.resetForm();
+                }
             });
 
             // =============================================
@@ -1112,21 +1222,23 @@
             // =============================================
             $(document).on('click', '#simpanData', function(e) {
                 e.preventDefault();
-                if (!$("#upsertDataForm").valid()) return false;
+                
+                // Clear semua error manual sebelum validasi
+                clearManualErrors();
+                
+                // Validasi form
+                if (!$("#upsertDataForm").valid()) {
+                    return false;
+                }
 
                 let id = $('#id').val();
                 let formData = new FormData($('#upsertDataForm')[0]);
                 let url = id ? `/v1/peminjaman/update/${id}` : '/v1/peminjaman/create';
 
-                Swal.fire({
-                    title: 'Menyimpan...',
-                    text: 'Mohon tunggu sebentar',
-                    allowOutsideClick: false,
-                    allowEscapeKey: false,
-                    didOpen: () => {
-                        Swal.showLoading();
-                    }
-                });
+                // Disable tombol untuk mencegah double submit
+                const $btn = $(this);
+                const originalText = $btn.html();
+                $btn.prop('disabled', true).html('<i class="bx bx-loader-alt bx-spin me-1"></i> Menyimpan...');
 
                 $.ajax({
                     type: 'POST',
@@ -1135,69 +1247,64 @@
                     contentType: false,
                     processData: false,
                     success: function(response) {
-                        if (response.code === 422) {
-                            let errors = response.errors,
-                                errorMessages = [];
-                            $.each(errors, function(key, value) {
-                                let $el = $('[name="' + key + '"]');
-                                $el.addClass('is-invalid');
-                                $el.after('<small class="text-danger">' + value[0] +
-                                    '</small>');
-                                errorMessages.push(value[0]);
-                            });
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Validasi Gagal',
-                                html: errorMessages.join('<br>'),
-                                confirmButtonColor: '#dc3545',
-                                confirmButtonText: 'OK'
+                        // Reset tombol
+                        $btn.prop('disabled', false).html(originalText);
+                        
+                        if (response.code === 422 && response.errors) {
+                            // Handle validation errors dari server
+                            $.each(response.errors, function(key, value) {
+                                showFieldError(key, Array.isArray(value) ? value[0] : value);
                             });
                         } else if (response.status === 'error') {
-                            Swal.fire({
-                                icon: 'warning',
-                                title: 'Gagal Menyimpan',
-                                text: response.message ||
-                                    'Terjadi kesalahan saat menyimpan data',
-                                confirmButtonColor: '#dc3545',
-                                confirmButtonText: 'OK'
-                            });
+                            // Tampilkan pesan error di field catatan (sebagai fallback)
+                            showFieldError('catatan', response.message || 'Terjadi kesalahan saat menyimpan data');
                         } else if (response.status === 'success') {
-                            const modal = bootstrap.Modal.getInstance(document.getElementById(
-                                'basicModal'));
-                            if (modal) modal.hide();
-                            Swal.fire({
-                                    icon: 'success',
-                                    title: 'Berhasil!',
-                                    text: response.message ||
-                                        'Pengajuan pinjaman berhasil diajukan.',
-                                    confirmButtonColor: '#28a745',
-                                    confirmButtonText: 'OK'
-                                })
-                                .then(() => {
-                                    fetchPeminjamanData();
-                                    getData();
+                            // Sukses - tutup modal dan reload data
+                            const modal = bootstrap.Modal.getInstance(document.getElementById('basicModal'));
+                            if (modal) {
+                                modal.hide();
+                                
+                                // Reset setelah modal tertutup
+                                $('#basicModal').one('hidden.bs.modal', function() {
+                                    // Extra cleanup setelah modal benar-benar tertutup
+                                    $('#upsertDataForm')[0].reset();
+                                    if (formValidator) {
+                                        formValidator.resetForm();
+                                    }
+                                    clearManualErrors();
                                 });
-                        } else {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Oops...',
-                                text: 'Terjadi kesalahan yang tidak terduga',
-                                confirmButtonColor: '#dc3545',
-                                confirmButtonText: 'OK'
-                            });
+                            }
+                            
+                            // Refresh data
+                            fetchPeminjamanData();
+                            getData();
+                            
+                            // Tampilkan notifikasi sukses (optional - bisa menggunakan toast)
+                            console.log('✓ ' + (response.message || 'Data berhasil disimpan'));
                         }
                     },
                     error: function(xhr) {
-                        let msg = 'Terjadi kesalahan saat menyimpan data';
-                        if (xhr.responseJSON) msg = xhr.responseJSON.message || xhr.responseJSON
-                            .error || msg;
-                        Swal.fire({
-                            icon: 'warning',
-                            title: 'Warning',
-                            text: msg,
-                            confirmButtonColor: '#dc3545',
-                            confirmButtonText: 'OK'
-                        });
+                        // Reset tombol
+                        $btn.prop('disabled', false).html(originalText);
+                        
+                        let errorMsg = 'Terjadi kesalahan saat menyimpan data';
+                        
+                        if (xhr.responseJSON) {
+                            if (xhr.responseJSON.errors) {
+                                // Handle validation errors
+                                $.each(xhr.responseJSON.errors, function(key, value) {
+                                    showFieldError(key, Array.isArray(value) ? value[0] : value);
+                                });
+                                return;
+                            } else if (xhr.responseJSON.message) {
+                                errorMsg = xhr.responseJSON.message;
+                            } else if (xhr.responseJSON.error) {
+                                errorMsg = xhr.responseJSON.error;
+                            }
+                        }
+                        
+                        // Tampilkan error di field catatan sebagai fallback
+                        showFieldError('catatan', errorMsg);
                     }
                 });
             });
@@ -1317,21 +1424,12 @@
                             $('#detailLoading').hide();
                             $('#detailContent').fadeIn();
                         } else {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Oops...',
-                                text: 'Gagal mengambil detail data!'
-                            });
+                            console.error('Gagal mengambil detail data');
                             detailModal.hide();
                         }
                     },
                     error: function(xhr, status, error) {
                         console.error('Error fetching detail:', error);
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Terjadi Kesalahan',
-                            text: 'Terjadi kesalahan saat mengambil detail data'
-                        });
                         detailModal.hide();
                     }
                 });
@@ -1382,85 +1480,49 @@
             // =============================================
             $(document).on('click', '#approveBtn', function() {
                 if (!currentPeminjamanId) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: 'ID Peminjaman tidak ditemukan!'
-                    });
+                    console.error('ID Peminjaman tidak ditemukan');
                     return;
                 }
-                Swal.fire({
-                    title: 'Konfirmasi Persetujuan',
-                    text: 'Apakah Anda yakin ingin menyetujui peminjaman ini?',
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonColor: '#28a745',
-                    cancelButtonColor: '#6c757d',
-                    confirmButtonText: '<i class="bx bx-check-circle me-1"></i> Ya, Setujui!',
-                    cancelButtonText: '<i class="bx bx-x me-1"></i> Batal',
-                    reverseButtons: true,
-                    customClass: {
-                        confirmButton: 'btn btn-success btn-lg px-4',
-                        cancelButton: 'btn btn-secondary btn-lg px-4'
+                
+                if (!confirm('Apakah Anda yakin ingin menyetujui peminjaman ini?')) {
+                    return;
+                }
+                
+                const $btn = $(this);
+                const originalText = $btn.html();
+                $btn.prop('disabled', true).html('<i class="bx bx-loader-alt bx-spin me-1"></i> Memproses...');
+                
+                $.ajax({
+                    url: '/v1/peminjaman/approve/' + currentPeminjamanId,
+                    type: 'POST',
+                    dataType: 'json',
+                    data: {
+                        _token: $('meta[name="csrf-token"]').attr('content')
                     },
-                    buttonsStyling: false
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        Swal.fire({
-                            title: 'Memproses...',
-                            text: 'Mohon tunggu sebentar',
-                            allowOutsideClick: false,
-                            allowEscapeKey: false,
-                            didOpen: () => {
-                                Swal.showLoading();
-                            }
-                        });
-                        $.ajax({
-                            url: '/v1/peminjaman/approve/' + currentPeminjamanId,
-                            type: 'POST',
-                            dataType: 'json',
-                            data: {
-                                _token: $('meta[name="csrf-token"]').attr('content')
-                            },
-                            success: function(response) {
-                                if (response.status === 'success') {
-                                    var detailModal = bootstrap.Modal.getInstance(
-                                        document.getElementById('detailModal'));
-                                    if (detailModal) detailModal.hide();
-                                    Swal.fire({
-                                            icon: 'success',
-                                            title: 'Berhasil!',
-                                            text: 'Peminjaman berhasil disetujui',
-                                            confirmButtonColor: '#28a745',
-                                            confirmButtonText: 'OK'
-                                        })
-                                        .then(() => {
-                                            fetchPeminjamanData();
-                                            getData();
-                                        });
-                                } else {
-                                    Swal.fire({
-                                        icon: 'error',
-                                        title: 'Gagal',
-                                        text: response.message ||
-                                            'Gagal menyetujui peminjaman',
-                                        confirmButtonColor: '#dc3545'
-                                    });
-                                }
-                            },
-                            error: function(xhr) {
-                                let msg =
-                                    'Terjadi kesalahan saat menyetujui peminjaman';
-                                if (xhr.responseJSON && xhr.responseJSON.message) msg =
-                                    xhr.responseJSON.message;
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: 'Error!',
-                                    text: msg,
-                                    confirmButtonColor: '#dc3545'
-                                });
-                            }
-                        });
+                    success: function(response) {
+                        $btn.prop('disabled', false).html(originalText);
+                        
+                        if (response.status === 'success') {
+                            var detailModal = bootstrap.Modal.getInstance(
+                                document.getElementById('detailModal'));
+                            if (detailModal) detailModal.hide();
+                            
+                            fetchPeminjamanData();
+                            getData();
+                            
+                            console.log('✓ Peminjaman berhasil disetujui');
+                        } else {
+                            console.error('Gagal menyetujui peminjaman:', response.message);
+                        }
+                    },
+                    error: function(xhr) {
+                        $btn.prop('disabled', false).html(originalText);
+                        
+                        let msg = 'Terjadi kesalahan saat menyetujui peminjaman';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            msg = xhr.responseJSON.message;
+                        }
+                        console.error('Error:', msg);
                     }
                 });
             });

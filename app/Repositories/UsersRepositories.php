@@ -20,7 +20,7 @@ class UsersRepositories implements UsersInterface
     public function getAllData()
     {
         $data = $this->UsersModel->all();
-        if($data->isEmpty()){
+        if ($data->isEmpty()) {
             return $this->dataNotFound();
         }
         return $this->success($data, 'success', 'success get all data user');
@@ -64,7 +64,10 @@ class UsersRepositories implements UsersInterface
             }
             $data->nama = $request->nama;
             $data->username = $request->username;
-            $data->password = $request->password;
+            if ($request->filled('password')) {
+                // Jika ada isinya, enkripsi lalu simpan
+                $data->password = $request->password;
+            }
             $data->jabatan = $request->jabatan;
             $data->nip = $request->nip;
             $data->no_hp = $request->no_hp;
