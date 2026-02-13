@@ -278,347 +278,312 @@
 @endsection
 
 @section('script')
-    <script>
-        $(document).ready(function() {
-            const today = new Date().toISOString().split('T')[0];
-            $('#tanggalPengembalian').val(today);
+<script>
+    $(document).ready(function() {
+        // ===================================================
+        // 1. CONFIG & HELPER FUNCTIONS
+        // ===================================================
+        const today = new Date().toISOString().split('T')[0];
+        $('#tanggalPengembalian').val(today);
 
-            let peminjamanData = [];
+        let peminjamanData = [];
+        let validator; // Variabel global untuk instance validator
 
-            // ===================================================
-            // KONSTANTA BUNGA
-            // Total bunga 4 bulan = 2 %  →  per bulan = 0,5 %
-            // Bunga dihitung dari pokok AWAL (simple interest)
-            // ===================================================
-            const TOTAL_MONTHS     = 4;
-            const TOTAL_INTEREST   = 0.02;                          // 2 %
-            const RATE_PER_MONTH   = TOTAL_INTEREST / TOTAL_MONTHS; // 0,5 %
+        // Konstanta Bunga
+        const TOTAL_MONTHS = 4;
+        const TOTAL_INTEREST = 0.02; // 2%
+        const RATE_PER_MONTH = TOTAL_INTEREST / TOTAL_MONTHS;
 
-            // Format Rupiah
-            function formatRupiah(angka) {
-                if (!angka || angka === 0 || angka === '0') return 'Rp 0';
-                const number = parseFloat(angka);
-                if (isNaN(number)) return 'Rp 0';
-                return 'Rp ' + number.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-            }
+        // Helper: Format Rupiah (Visual)
+        function formatRupiah(angka) {
+            if (!angka || angka === 0 || angka === '0') return 'Rp 0';
+            const number = parseFloat(angka);
+            if (isNaN(number)) return 'Rp 0';
+            return 'Rp ' + number.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        }
 
-            // Format Tanggal
-            function formatTanggal(tanggal) {
-                if (!tanggal || tanggal === '-') return '-';
-                const date = new Date(tanggal);
-                const options = { year: 'numeric', month: 'long', day: 'numeric' };
-                return date.toLocaleDateString('id-ID', options);
-            }
+        // Helper: Parse Rupiah ke Integer (Logic)
+        function parseRupiah(rupiah) {
+            if (typeof rupiah !== 'string') return rupiah;
+            return parseInt(rupiah.replace(/[^0-9]/g, '')) || 0;
+        }
 
-            // Parse Rupiah to Number
-            function parseRupiah(rupiah) {
-                return parseInt(rupiah.replace(/[^0-9]/g, '')) || 0;
-            }
-
-            // Format input as Rupiah
-            $('#jumlahPengembalian').on('keyup', function() {
-                let value = $(this).val().replace(/[^0-9]/g, '');
-                if (value) {
-                    $(this).val(formatRupiah(value).replace('Rp ', ''));
-                }
+        // Helper: Format Tanggal Ind
+        function formatTanggal(tanggal) {
+            if (!tanggal || tanggal === '-') return '-';
+            return new Date(tanggal).toLocaleDateString('id-ID', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
             });
+        }
 
-            // ============================================================
-            // RENDER JADWAL CICILAN
-            // ============================================================
-            function renderJadwalCicilan(pokok) {
-                pokok = parseFloat(pokok) || 0;
-                if (pokok <= 0) return;
+        // Event: Auto format rupiah saat mengetik
+        $('#jumlahPengembalian').on('keyup input', function() {
+            let value = $(this).val().replace(/[^0-9]/g, '');
+            if (value) {
+                $(this).val(formatRupiah(value).replace('Rp ', ''));
+            }
+        });
 
-                var pokokPerBulan     = pokok / TOTAL_MONTHS;
-                var bungaPerBulan     = pokok * RATE_PER_MONTH;
-                var cicilanPerBulan   = pokokPerBulan + bungaPerBulan;
-                var totalBunga        = pokok * TOTAL_INTEREST;
-                var totalPengembalian = pokok + totalBunga;
+        // ===================================================
+        // 2. LOGIC CICILAN & UMKM
+        // ===================================================
+        function renderJadwalCicilan(pokok) {
+            pokok = parseFloat(pokok) || 0;
+            if (pokok <= 0) return;
 
-                // --- Summary boxes ---
-                $('#js-pokok').text(formatRupiah(pokok));
-                $('#js-bunga').text(formatRupiah(totalBunga));
-                $('#js-total').text(formatRupiah(totalPengembalian));
-                $('#js-perbulan').text(formatRupiah(cicilanPerBulan));
+            const pokokPerBulan = pokok / TOTAL_MONTHS;
+            const bungaPerBulan = pokok * RATE_PER_MONTH;
+            const cicilanPerBulan = pokokPerBulan + bungaPerBulan;
+            const totalBunga = pokok * TOTAL_INTEREST;
+            const totalPengembalian = pokok + totalBunga;
 
-                // --- Info di form card ---
-                $('#infoPerbulan').text(formatRupiah(cicilanPerBulan));
+            // Update Summary Text
+            $('#js-pokok').text(formatRupiah(pokok));
+            $('#js-bunga').text(formatRupiah(totalBunga));
+            $('#js-total').text(formatRupiah(totalPengembalian));
+            $('#js-perbulan').text(formatRupiah(cicilanPerBulan));
+            $('#infoPerbulan').text(formatRupiah(cicilanPerBulan));
 
-                // --- Rows per bulan ---
-                var tbody  = '';
-                var saldo  = pokok;
+            // Render Table
+            let tbody = '';
+            let saldo = pokok;
 
-                for (var i = 1; i <= TOTAL_MONTHS; i++) {
-                    saldo -= pokokPerBulan;
-
-                    tbody += '<tr>';
-                    tbody += '<td class="text-center fw-semibold">Bulan ke-' + i + '</td>';
-                    tbody += '<td class="text-end">' + formatRupiah(pokokPerBulan) + '</td>';
-                    tbody += '<td class="text-end text-warning fw-bold">' + formatRupiah(bungaPerBulan) + '</td>';
-                    tbody += '<td class="text-end text-danger fw-bold">' + formatRupiah(cicilanPerBulan) + '</td>';
-                    tbody += '<td class="text-end text-muted">' + formatRupiah(Math.max(saldo, 0)) + '</td>';
-                    tbody += '</tr>';
-                }
-
-                $('#jadwal-tbody').html(tbody);
-
-                // --- Footer totals ---
-                $('#jadwal-foot-pokok').text(formatRupiah(pokok));
-                $('#jadwal-foot-bunga').text(formatRupiah(totalBunga));
-                $('#jadwal-foot-total').text(formatRupiah(totalPengembalian));
+            for (let i = 1; i <= TOTAL_MONTHS; i++) {
+                saldo -= pokokPerBulan;
+                tbody += `
+                    <tr>
+                        <td class="text-center fw-semibold">Bulan ke-${i}</td>
+                        <td class="text-end">${formatRupiah(pokokPerBulan)}</td>
+                        <td class="text-end text-warning fw-bold">${formatRupiah(bungaPerBulan)}</td>
+                        <td class="text-end text-danger fw-bold">${formatRupiah(cicilanPerBulan)}</td>
+                        <td class="text-end text-muted">${formatRupiah(Math.max(saldo, 0))}</td>
+                    </tr>`;
             }
 
-            // Load UMKM List with Active Loans
-            function loadUMKMList() {
-                $.ajax({
-                    url: '/v1/peminjaman',
-                    type: 'GET',
-                    dataType: 'json',
-                    beforeSend: function() {
-                        $('#selectUmkm').prop('disabled', true);
-                        $('#selectUmkm').html('<option value="">Memuat data...</option>');
-                    },
-                    success: function(response) {
-                        console.log(response);
-                        
-                        if (response.status === 'success' && response.data) {
-                            peminjamanData = response.data;
-                            
-                            const activeLoan = peminjamanData.filter(item => 
-                                item.status.toLowerCase() === 'disetujui' && 
-                                parseFloat(item.sisa_pinjaman) > 0
-                            );
-                            
-                            let options = '<option value="">-- Pilih UMKM --</option>';
-                            
-                            if (activeLoan.length > 0) {
-                                activeLoan.forEach(function(item) {
-                                    options += `<option value="${item.id}" data-umkm='${JSON.stringify(item)}'>
-                                        ${item.umkm.nama_umkm} - Sisa: ${formatRupiah(item.sisa_pinjaman)}
-                                    </option>`;
-                                });
-                                
-                                $('#selectUmkm').html(options);
-                                $('#selectUmkm').prop('disabled', false);
-                            } else {
-                                $('#selectUmkm').html('<option value="">Tidak ada pinjaman aktif</option>');
-                                
-                                Swal.fire({
-                                    icon: 'info',
-                                    title: 'Informasi',
-                                    text: 'Tidak ada pinjaman aktif yang dapat dikembalikan',
-                                    confirmButtonColor: '#dc3545'
-                                });
-                            }
-                        } else {
-                            $('#selectUmkm').html('<option value="">Gagal memuat data</option>');
-                            
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Error',
-                                text: 'Gagal memuat data peminjaman',
-                                confirmButtonColor: '#dc3545'
+            $('#jadwal-tbody').html(tbody);
+            $('#jadwal-foot-pokok').text(formatRupiah(pokok));
+            $('#jadwal-foot-bunga').text(formatRupiah(totalBunga));
+            $('#jadwal-foot-total').text(formatRupiah(totalPengembalian));
+        }
+
+        function loadUMKMList() {
+            $.ajax({
+                url: '/v1/peminjaman',
+                type: 'GET',
+                dataType: 'json',
+                beforeSend: function() {
+                    $('#selectUmkm').html('<option value="">Memuat data...</option>').prop('disabled', true);
+                },
+                success: function(response) {
+                    if (response.status === 'success' && response.data) {
+                        peminjamanData = response.data;
+                        const activeLoan = peminjamanData.filter(item =>
+                            item.status.toLowerCase() === 'disetujui' && parseFloat(item.sisa_pinjaman) > 0
+                        );
+
+                        let options = '<option value="">-- Pilih UMKM --</option>';
+                        if (activeLoan.length > 0) {
+                            activeLoan.forEach(item => {
+                                options += `<option value="${item.id}" data-umkm='${JSON.stringify(item)}'>${item.umkm.nama_umkm} - Sisa: ${formatRupiah(item.sisa_pinjaman)}</option>`;
                             });
+                            $('#selectUmkm').html(options).prop('disabled', false);
+                        } else {
+                            $('#selectUmkm').html('<option value="">Tidak ada pinjaman aktif</option>');
                         }
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('Error:', error);
-                        $('#selectUmkm').html('<option value="">Gagal memuat data</option>');
-                        
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error',
-                            text: 'Terjadi kesalahan saat memuat data',
-                            confirmButtonColor: '#dc3545'
-                        });
                     }
-                });
+                },
+                error: function() {
+                    $('#selectUmkm').html('<option value="">Gagal memuat data</option>');
+                }
+            });
+        }
+
+        $('#selectUmkm').on('change', function() {
+            const selectedId = $(this).val();
+            // Reset form & validasi saat ganti UMKM
+            $('#pengembalianForm')[0].reset();
+            $('#tanggalPengembalian').val(today);
+            if (validator) validator.resetForm();
+            $('.is-invalid').removeClass('is-invalid');
+
+            if (selectedId) {
+                const selectedOption = $(this).find('option:selected');
+                const umkmData = JSON.parse(selectedOption.attr('data-umkm'));
+
+                $('#peminjamanId').val(umkmData.id);
+                $('#namaUmkm').text(umkmData.umkm.nama_umkm || '-');
+                $('#totalPinjaman').text(formatRupiah(umkmData.jumlah_pinjaman));
+                $('#sisaPinjaman').text(formatRupiah(umkmData.sisa_pinjaman));
+                $('#tanggalBerlaku').text(formatTanggal(umkmData.tanggal_disetujui));
+                $('#maxPengembalian').text(formatRupiah(umkmData.sisa_pinjaman));
+
+                // Simpan sisa pinjaman di data attribute form untuk validasi
+                $('#pengembalianForm').data('sisa-pinjaman', umkmData.sisa_pinjaman);
+
+                renderJadwalCicilan(umkmData.jumlah_pinjaman);
+
+                $('#infoContainer').slideDown(400);
+                $('#formCard').fadeIn(400);
+                $('#btnSubmit').prop('disabled', false);
+            } else {
+                $('#formCard, #infoContainer').hide();
+                $('#btnSubmit').prop('disabled', true);
+            }
+        });
+
+        loadUMKMList();
+
+        // ===================================================
+        // 3. PROFESSIONAL VALIDATION CONFIGURATION
+        // ===================================================
+        
+        // Custom Method: Cek Sisa Pinjaman
+        $.validator.addMethod("checkMaxSaldo", function(value, element) {
+            const sisa = parseFloat($('#pengembalianForm').data('sisa-pinjaman')) || 0;
+            const input = parseRupiah(value);
+            return input > 0 && input <= sisa;
+        }, function() {
+            // Dinamis message berdasarkan sisa
+            const sisa = $('#pengembalianForm').data('sisa-pinjaman');
+            return "Maksimal pengembalian adalah " + formatRupiah(sisa);
+        });
+
+        validator = $("#pengembalianForm").validate({
+            // Trigger validasi real-time
+            onkeyup: function(element) { $(element).valid(); },
+            onfocusout: function(element) { $(element).valid(); },
+            
+            // CSS Class Bootstrap 5
+            errorClass: "is-invalid text-danger small",
+            validClass: "is-valid",
+            errorElement: "div", // Gunakan div agar block ke bawah
+            
+            // Penempatan Error (Handling Input Group)
+            errorPlacement: function(error, element) {
+                error.addClass('invalid-feedback'); // Bootstrap class error text
+                if (element.closest('.input-group').length) {
+                    // Jika input ada di dalam input-group (ada Rp), taruh error setelah group
+                    element.closest('.input-group').after(error);
+                } else {
+                    error.insertAfter(element);
+                }
+            },
+            
+            // Rules
+            rules: {
+                jumlah_pengembalian: {
+                    required: true,
+                    checkMaxSaldo: true
+                },
+                tanggal_pengembalian: {
+                    required: true,
+                    date: true
+                }
+            },
+            
+            // Messages
+            messages: {
+                jumlah_pengembalian: {
+                    required: "Nominal pengembalian wajib diisi"
+                },
+                tanggal_pengembalian: {
+                    required: "Tanggal wajib diisi",
+                    date: "Format tanggal salah"
+                }
+            },
+            
+            // Styling field saat error/valid
+            highlight: function(element) {
+                $(element).addClass('is-invalid').removeClass('is-valid');
+            },
+            unhighlight: function(element) {
+                $(element).removeClass('is-invalid').addClass('is-valid');
+            }
+        });
+
+        // ===================================================
+        // 4. SUBMIT HANDLER
+        // ===================================================
+        $('#pengembalianForm').on('submit', function(e) {
+            e.preventDefault();
+
+            // 1. Cek Validasi Frontend (Tanpa Alert)
+            if (!$(this).valid()) {
+                return false; // Error akan muncul otomatis di bawah field
             }
 
-            // Handle UMKM Selection Change
-            $('#selectUmkm').on('change', function() {
-                const selectedId = $(this).val();
-                
-                if (selectedId) {
-                    const selectedOption = $(this).find('option:selected');
-                    const umkmData = JSON.parse(selectedOption.attr('data-umkm'));
-                    
-                    console.log('Selected UMKM:', umkmData);
-                    
-                    $('#peminjamanId').val(umkmData.id);
-                    
-                    // Fill info cards
-                    $('#namaUmkm').text(umkmData.umkm.nama_umkm || '-');
-                    $('#totalPinjaman').text(formatRupiah(umkmData.jumlah_pinjaman));
-                    $('#sisaPinjaman').text(formatRupiah(umkmData.sisa_pinjaman));
-                    $('#tanggalBerlaku').text(formatTanggal(umkmData.tanggal_disetujui || umkmData.batas_pengembalian));
-                    $('#maxPengembalian').text(formatRupiah(umkmData.sisa_pinjaman));
-                    
-                    $('#pengembalianForm').data('sisa-pinjaman', umkmData.sisa_pinjaman);
+            const form = this;
+            const formData = new FormData(form);
+            const jumlahRaw = parseRupiah($('#jumlahPengembalian').val());
+            formData.set('jumlah_pengembalian', jumlahRaw);
 
-                    // ---- Render jadwal cicilan dari pokok AWAL ----
-                    renderJadwalCicilan(umkmData.jumlah_pinjaman);
-
-                    // Show info + form
-                    $('#infoContainer').slideDown(400, function() {
-                        setTimeout(function() {
-                            $('#formCard').fadeIn(400);
-                            $('html, body').animate({
-                                scrollTop: $('#formCard').offset().top - 100
-                            }, 600);
-                        }, 300);
+            // Konfirmasi User (Ini BUKAN alert validasi, tapi konfirmasi aksi)
+            Swal.fire({
+                title: 'Konfirmasi Simpan',
+                html: `Simpan pengembalian sebesar <strong>${formatRupiah(jumlahRaw)}</strong>?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#0d6efd',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, Simpan'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    
+                    // Loading State
+                    Swal.fire({
+                        title: 'Memproses...',
+                        didOpen: () => Swal.showLoading()
                     });
-                    
-                    $('#btnSubmit').prop('disabled', false);
-                } else {
-                    $('#formCard').fadeOut(300);
-                    $('#infoContainer').slideUp(300);
-                    
-                    $('#peminjamanId').val('');
-                    $('#pengembalianForm').removeData('sisa-pinjaman');
-                    $('#pengembalianForm')[0].reset();
-                    $('#tanggalPengembalian').val(today);
-                    $('#infoPerbulan').text('-');
-                    
                     $('#btnSubmit').prop('disabled', true);
-                }
-            });
 
-            loadUMKMList();
-
-            // ===== Validation =====
-            $.validator.setDefaults({
-                errorElement: 'small',
-                errorClass: 'text-danger',
-                highlight: function(element) {
-                    $(element).addClass('is-invalid');
-                },
-                unhighlight: function(element) {
-                    $(element).removeClass('is-invalid');
-                }
-            });
-
-            $.validator.addMethod("maxPengembalian", function(value, element) {
-                const sisaPinjaman = $('#pengembalianForm').data('sisa-pinjaman');
-                const jumlahPengembalian = parseRupiah(value);
-                return jumlahPengembalian <= parseFloat(sisaPinjaman);
-            }, "Jumlah pengembalian melebihi sisa pinjaman");
-
-            $("#pengembalianForm").validate({
-                rules: {
-                    jumlah_pengembalian: {
-                        required: true,
-                        maxPengembalian: true
-                    },
-                    tanggal_pengembalian: {
-                        required: true,
-                        date: true
-                    }
-                },
-                messages: {
-                    jumlah_pengembalian: {
-                        required: "Jumlah pengembalian wajib diisi"
-                    },
-                    tanggal_pengembalian: {
-                        required: "Tanggal pengembalian wajib diisi",
-                        date: "Format tanggal tidak valid"
-                    }
-                }
-            });
-
-            // ===== Form Submit =====
-            $('#pengembalianForm').on('submit', function(e) {
-                e.preventDefault();
-
-                if (!$(this).valid()) {
-                    return false;
-                }
-
-                const formData = new FormData(this);
-                const jumlahPengembalian = parseRupiah($('#jumlahPengembalian').val());
-                formData.set('jumlah_pengembalian', jumlahPengembalian);
-
-                Swal.fire({
-                    title: 'Konfirmasi',
-                    html: `Apakah Anda yakin ingin menyimpan pengembalian sebesar <strong>${formatRupiah(jumlahPengembalian)}</strong>?`,
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonColor: '#dc3545',
-                    cancelButtonColor: '#6c757d',
-                    confirmButtonText: '<i class="bx bx-check me-1"></i> Ya, Simpan',
-                    cancelButtonText: '<i class="bx bx-x me-1"></i> Batal',
-                    reverseButtons: true
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        Swal.fire({
-                            title: 'Menyimpan...',
-                            text: 'Mohon tunggu sebentar',
-                            allowOutsideClick: false,
-                            allowEscapeKey: false,
-                            didOpen: () => { Swal.showLoading(); }
-                        });
-
-                        $('#btnSubmit').prop('disabled', true);
-
-                        $.ajax({
-                            url: '/v1/pengembalian/create',
-                            type: 'POST',
-                            data: formData,
-                            contentType: false,
-                            processData: false,
-                            success: function(response) {
-                                console.log(response);
-                                
-                                if (response.status === 'success') {
-                                    Swal.fire({
-                                        icon: 'success',
-                                        title: 'Berhasil!',
-                                        text: 'Pengembalian berhasil disimpan',
-                                        confirmButtonColor: '#dc3545',
-                                        confirmButtonText: 'OK'
-                                    }).then(() => {
-                                        window.location.href = '/peminjaman';
-                                    });
-                                } else if (response.status === 'error') {
-                                    Swal.fire({
-                                        icon: 'error',
-                                        title: 'Gagal',
-                                        text: response.message || 'Gagal menyimpan pengembalian',
-                                        confirmButtonColor: '#dc3545'
-                                    });
-                                    $('#btnSubmit').prop('disabled', false);
-                                }
-                            },
-                            error: function(xhr, status, error) {
-                                console.error('Error:', error);
-                                
-                                let errorMessage = 'Terjadi kesalahan saat menyimpan data';
-                                
-                                if (xhr.responseJSON) {
-                                    if (xhr.responseJSON.message) {
-                                        errorMessage = xhr.responseJSON.message;
-                                    } else if (xhr.responseJSON.errors) {
-                                        const errors = xhr.responseJSON.errors;
-                                        errorMessage = Object.values(errors).flat().join('<br>');
-                                    }
-                                }
-                                
-                                Swal.fire({
-                                    icon: 'warning',
-                                    title: 'Warning',
-                                    html: errorMessage,
-                                    confirmButtonColor: '#dc3545'
-                                });
-                                
+                    $.ajax({
+                        url: '/v1/pengembalian/create',
+                        type: 'POST',
+                        data: formData,
+                        contentType: false,
+                        processData: false,
+                        success: function(response) {
+                            if (response.status === 'success') {
+                                Swal.fire('Berhasil!', 'Data tersimpan.', 'success')
+                                    .then(() => window.location.href = '/peminjaman');
+                            } else {
+                                Swal.fire('Gagal', response.message, 'error');
                                 $('#btnSubmit').prop('disabled', false);
                             }
-                        });
-                    }
-                });
+                        },
+                        error: function(xhr) {
+                            $('#btnSubmit').prop('disabled', false);
+                            Swal.close(); // Tutup loading
+
+                            // === HANDLE ERROR BACKEND SECARA ELEGAN ===
+                            if (xhr.status === 422) { // Error Validasi dari Laravel/Backend
+                                const errors = xhr.responseJSON.errors;
+                                const formattedErrors = {};
+                                
+                                // Mapping error backend ke field frontend
+                                $.each(errors, function(key, value) {
+                                    // value[0] mengambil pesan error pertama dari array
+                                    formattedErrors[key] = value[0]; 
+                                });
+
+                                // Tampilkan error di bawah input field menggunakan Validator
+                                validator.showErrors(formattedErrors);
+                                
+                                // Fokus ke field pertama yang error
+                                validator.focusInvalid();
+                            } else {
+                                // Error sistem (500, 404, dll) baru pakai Alert umum
+                                Swal.fire('Error', 'Terjadi kesalahan sistem', 'error');
+                            }
+                        }
+                    });
+                }
             });
         });
-    </script>
+    });
+</script>
 
     <style>
         /* Global */
