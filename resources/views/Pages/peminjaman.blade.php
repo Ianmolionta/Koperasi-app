@@ -836,7 +836,7 @@
                 if (limitAktif <= 0) {
                     $('#umkmCategoryInfo').addClass('d-none');
                     $('#umkmCategoryPlaceholder').removeClass('d-none').html(
-                        '<i class="bx bx-error-circle"></i><span class="text-danger">Limit UMKM tidak ditemukan</span>'
+                        '<i class="bx bx-error-circle"></i><span class="text-danger">Anda tidak bisa melakukan pinjaman karena anda telah di blacklist</span>'
                     );
                     $('#jumlah_pinjaman').html('<option value="">Limit tidak ditemukan</option>').prop(
                         'disabled', true);

@@ -111,6 +111,7 @@ class PengembalianRepositories implements PengembalianInterface
              * 6. Hitung keterlambatan
              */
             $batas = Carbon::parse($peminjaman->batas_pengembalian);
+            // diffInDays false: jika tanggalBayar < batas hasilnya negatif (cepat), jika > batas hasilnya positif (telat)
             $hariTerlambat = $batas->diffInDays($tanggalBayar, false);
 
             /**
@@ -136,43 +137,64 @@ class PengembalianRepositories implements PengembalianInterface
             ]);
 
             /**
-             * 9. Jika pinjaman LUNAS → evaluasi limit
+             * 9. Jika pinjaman LUNAS → Evaluasi Limit & Risiko
+             */
+            /**
+             * 9. Jika pinjaman LUNAS → Evaluasi Limit & Risiko
              */
             if ((int) $peminjaman->sisa_pinjaman === 0) {
 
                 $limitSebelumnya = $peminjaman->jumlah_pinjaman;
                 $limitBaru = $limitSebelumnya;
                 $perubahan = 'tetap';
+
+                // INISIALISASI DEFAULT agar tidak "Undefined"
                 $statusRisiko = null;
 
                 if ($hariTerlambat < 0) {
-                    $limitBaru = $limitSebelumnya * 1.10;
+                    // KONDISI 2: Lebih Cepat
+                    $limitBaru = $limitSebelumnya + ($limitSebelumnya * 0.10);
                     $perubahan = 'naik';
-                } elseif ($hariTerlambat > 60) {
-                    $limitBaru = $limitSebelumnya * 0.90;
+
+                } elseif ($hariTerlambat == 0) {
+                    // KONDISI 1: Tepat Waktu
+                    $limitBaru = $limitSebelumnya;
+                    $perubahan = 'tetap';
+
+                } else {
+                    // KONDISI TERLAMBAT
                     $perubahan = 'turun';
-                    $statusRisiko = 'merah';
-                } elseif ($hariTerlambat > 30) {
-                    $limitBaru = $limitSebelumnya * 0.90;
-                    $perubahan = 'turun';
-                    $statusRisiko = 'kuning';
+
+                    if ($hariTerlambat > 60) {
+                        // KONDISI 5: > 2 Bulan
+                        $limitBaru = 0;
+                        $statusRisiko = 'hitam';
+                    } elseif ($hariTerlambat > 30) {
+                        // KONDISI 4: 2 Bulan
+                        $limitBaru = $limitSebelumnya - ($limitSebelumnya * 0.15);
+                        $statusRisiko = 'merah';
+                    } else {
+                        // KONDISI 3: 1 Bulan
+                        $limitBaru = $limitSebelumnya - ($limitSebelumnya * 0.10);
+                        $statusRisiko = 'kuning';
+                    }
                 }
 
                 // Update status pinjaman
                 $peminjaman->status = 'lunas';
 
-                // Histori limit KHUSUS pelunasan
+                // Simpan Histori Limit Pelunasan
                 HistoriLimitModel::create([
                     'umkm_id' => $peminjaman->umkm_id,
                     'limit_sebelumnya' => $limitSebelumnya,
                     'limit_baru' => (int) $limitBaru,
                     'perubahan' => $perubahan,
                     'total_bunga' => 0,
-                    'alasan' => 'Evaluasi limit saat pelunasan',
+                    'alasan' => 'Evaluasi pelunasan (Keterlambatan: ' . $hariTerlambat . ' hari)',
                     'tanggal_berlaku' => now(),
                 ]);
 
-                // Status risiko UMKM
+                // Update Status Risiko UMKM (Hanya jika statusRisiko ada isinya)
                 if ($statusRisiko) {
                     StatusRisikoUmkmModel::updateOrCreate(
                         ['umkm_id' => $peminjaman->umkm_id],
