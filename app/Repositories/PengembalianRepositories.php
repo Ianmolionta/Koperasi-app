@@ -123,28 +123,63 @@ class PengembalianRepositories implements PengembalianInterface
                 $bungaBulanIni = $bungaMaksimal;
             }
 
+            // ==========================================
+            // FIX: LOGIKA LIMIT YANG CERDAS
+            // ==========================================
+            $limitDasar = DB::table('tb_limit')
+                ->where('umkm_id', $peminjaman->umkm_id)
+                ->value('limit');
+            $limitDasar = $limitDasar ? (float) $limitDasar : 0;
+
+            $historiTerakhir = DB::table('tb_histori_limit')
+                ->where('umkm_id', $peminjaman->umkm_id)
+                ->orderBy('id', 'desc')
+                ->first();
+
+            /**
+             * PENJELASAN LOGIKA:
+             * 1. Jika tidak ada histori, gunakan limit dasar.
+             * 2. Jika histori terakhir adalah 'turun' atau 'naik', kita HARUS mengikuti histori tersebut 
+             * (karena itu hasil evaluasi resmi, bukan bug nominal).
+             * 3. Jika histori terakhir nominalnya lebih kecil dari limit dasar TAPI statusnya 'tetap', 
+             * itu adalah indikasi BUG NOMINAL pinjaman, maka kita RESET ke limit dasar.
+             */
+            $limitSaatIni = $limitDasar;
+
+            if ($historiTerakhir) {
+                $nominalHistori = (float) $historiTerakhir->limit_baru;
+
+                if ($historiTerakhir->perubahan !== 'tetap') {
+                    // Jika memang ada track record naik/turun, ikuti angka itu meskipun di bawah limit dasar
+                    $limitSaatIni = $nominalHistori;
+                } else {
+                    // Jika statusnya 'tetap' tapi angkanya menyusut (misal jadi 5jt), itu bug nominal.
+                    // Maka kita ambil yang terbesar (Reset ke 10jt).
+                    $limitSaatIni = max($limitDasar, $nominalHistori);
+                }
+            }
+            // ==========================================
+
             /**
              * 8. Histori limit BULANAN (WAJIB SETIAP BAYAR)
              */
             HistoriLimitModel::create([
-                'umkm_id' => $peminjaman->umkm_id,
-                'limit_sebelumnya' => $peminjaman->jumlah_pinjaman,
-                'limit_baru' => $peminjaman->jumlah_pinjaman,
-                'perubahan' => 'tetap',
-                'total_bunga' => $bungaBulanIni,
-                'alasan' => 'Pengembalian bulanan',
-                'tanggal_berlaku' => now(),
+                'umkm_id'          => $peminjaman->umkm_id,
+                'limit_sebelumnya' => $limitSaatIni, // <-- FIX: Pakai Limit Asli
+                'limit_baru'       => $limitSaatIni, // <-- FIX: Pakai Limit Asli
+                'perubahan'        => 'tetap',
+                'total_bunga'      => $bungaBulanIni,
+                'alasan'           => 'Pengembalian bulanan',
+                'tanggal_berlaku'  => now(),
             ]);
 
             /**
              * 9. Jika pinjaman LUNAS → Evaluasi Limit & Risiko
              */
-            /**
-             * 9. Jika pinjaman LUNAS → Evaluasi Limit & Risiko
-             */
             if ((int) $peminjaman->sisa_pinjaman === 0) {
 
-                $limitSebelumnya = $peminjaman->jumlah_pinjaman;
+                // FIX: Kalkulasi kenaikan/penurunan berdasarkan LIMIT ASLI, bukan jumlah pinjaman!
+                $limitSebelumnya = $limitSaatIni;
                 $limitBaru = $limitSebelumnya;
                 $perubahan = 'tetap';
 
@@ -152,15 +187,13 @@ class PengembalianRepositories implements PengembalianInterface
                 $statusRisiko = null;
 
                 if ($hariTerlambat < 0) {
-                    // KONDISI 2: Lebih Cepat
+                    // KONDISI 2: Lebih Cepat (Kenaikan dari Limit Asli)
                     $limitBaru = $limitSebelumnya + ($limitSebelumnya * 0.10);
                     $perubahan = 'naik';
-
                 } elseif ($hariTerlambat == 0) {
                     // KONDISI 1: Tepat Waktu
                     $limitBaru = $limitSebelumnya;
                     $perubahan = 'tetap';
-
                 } else {
                     // KONDISI TERLAMBAT
                     $perubahan = 'turun';
@@ -185,13 +218,13 @@ class PengembalianRepositories implements PengembalianInterface
 
                 // Simpan Histori Limit Pelunasan
                 HistoriLimitModel::create([
-                    'umkm_id' => $peminjaman->umkm_id,
+                    'umkm_id'          => $peminjaman->umkm_id,
                     'limit_sebelumnya' => $limitSebelumnya,
-                    'limit_baru' => (int) $limitBaru,
-                    'perubahan' => $perubahan,
-                    'total_bunga' => 0,
-                    'alasan' => 'Evaluasi pelunasan (Keterlambatan: ' . $hariTerlambat . ' hari)',
-                    'tanggal_berlaku' => now(),
+                    'limit_baru'       => (int) $limitBaru,
+                    'perubahan'        => $perubahan,
+                    'total_bunga'      => 0,
+                    'alasan'           => 'Evaluasi pelunasan (Keterlambatan: ' . $hariTerlambat . ' hari)',
+                    'tanggal_berlaku'  => now(),
                 ]);
 
                 // Update Status Risiko UMKM (Hanya jika statusRisiko ada isinya)
@@ -199,9 +232,9 @@ class PengembalianRepositories implements PengembalianInterface
                     StatusRisikoUmkmModel::updateOrCreate(
                         ['umkm_id' => $peminjaman->umkm_id],
                         [
-                            'status' => $statusRisiko,
+                            'status'             => $statusRisiko,
                             'hari_keterlambatan' => max(0, $hariTerlambat),
-                            'tanggal_penetapan' => now(),
+                            'tanggal_penetapan'  => now(),
                         ]
                     );
                 }
