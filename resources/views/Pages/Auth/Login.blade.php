@@ -11,9 +11,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     
     <style>
-        /* ══════════════════════════════════════════════════════════════════════════════
-           CSS VARIABLES & RESET
-        ══════════════════════════════════════════════════════════════════════════════ */
         :root {
             --red-deep: #8B0000;
             --red-main: #C41E3A;
@@ -35,11 +32,7 @@
             --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'DM Sans', sans-serif;
@@ -52,9 +45,6 @@
             -moz-osx-font-smoothing: grayscale;
         }
 
-        /* ══════════════════════════════════════════════════════════════════════════════
-           LEFT PANEL - VISUAL DESIGN
-        ══════════════════════════════════════════════════════════════════════════════ */
         .left-panel {
             flex: 1;
             position: relative;
@@ -65,7 +55,6 @@
             justify-content: center;
         }
 
-        /* Gradient overlay background */
         .left-panel::before {
             content: '';
             position: absolute;
@@ -77,7 +66,6 @@
             z-index: 1;
         }
 
-        /* Floating circles animation */
         .circle {
             position: absolute;
             border-radius: 50%;
@@ -98,7 +86,6 @@
             50% { transform: translateY(-18px) scale(1.03); }
         }
 
-        /* Diagonal stripe pattern */
         .stripe {
             position: absolute;
             inset: 0;
@@ -113,7 +100,6 @@
             pointer-events: none;
         }
 
-        /* Left content */
         .left-content {
             position: relative;
             z-index: 2;
@@ -140,7 +126,6 @@
             max-width: 400px;
         }
 
-        /* Version tag */
         .tag {
             position: absolute;
             bottom: 48px;
@@ -168,9 +153,6 @@
             50% { opacity: 0.4; transform: scale(0.8); }
         }
 
-        /* ══════════════════════════════════════════════════════════════════════════════
-           RIGHT PANEL - LOGIN FORM
-        ══════════════════════════════════════════════════════════════════════════════ */
         .right-panel {
             flex: 0 0 500px;
             display: flex;
@@ -199,7 +181,6 @@
             animation: fadeUp 0.9s ease 0.5s both;
         }
 
-        /* Form header */
         .form-header {
             margin-bottom: 40px;
             text-align: left;
@@ -219,9 +200,6 @@
             font-weight: 400;
         }
 
-        /* ══════════════════════════════════════════════════════════════════════════════
-           INPUT GROUPS WITH PROFESSIONAL VALIDATION
-        ══════════════════════════════════════════════════════════════════════════════ */
         .input-group {
             margin-bottom: 24px;
             position: relative;
@@ -237,9 +215,7 @@
             margin-bottom: 10px;
         }
 
-        .input-wrap {
-            position: relative;
-        }
+        .input-wrap { position: relative; }
 
         .input-wrap .icon {
             position: absolute;
@@ -272,10 +248,7 @@
             opacity: 0.7;
         }
 
-        /* Input focus state */
-        .input-group:focus-within .icon {
-            color: var(--red-main);
-        }
+        .input-group:focus-within .icon { color: var(--red-main); }
 
         .input-group:focus-within input {
             border-color: var(--red-main);
@@ -283,28 +256,20 @@
             box-shadow: 0 0 0 4px rgba(196, 30, 58, 0.1);
         }
 
-        /* ══════════════════════════════════════════════════════════════════════════════
-           VALIDATION STATES - PROFESSIONAL ERROR HANDLING
-        ══════════════════════════════════════════════════════════════════════════════ */
-        
-        /* Error state */
-        .input-group.error .icon {
-            color: var(--error-red);
-        }
+        /* ─── Error state ─── */
+        .input-group.error .icon { color: var(--error-red); }
 
         .input-group.error input {
-            border-color: var(--error-red);
-            background: #FEF2F2;
+            border-color: var(--error-red) !important;
+            background: #FEF2F2 !important;
+            box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.1) !important;
         }
 
-        .input-group.error:focus-within input {
-            box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.1);
-        }
+        /* Override focus-within when error is active so red stays red */
+        .input-group.error:focus-within .icon { color: var(--error-red); }
 
-        /* Success state */
-        .input-group.success .icon {
-            color: var(--success-green);
-        }
+        /* ─── Success state ─── */
+        .input-group.success .icon { color: var(--success-green); }
 
         .input-group.success input {
             border-color: var(--success-green);
@@ -315,7 +280,7 @@
             box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
         }
 
-        /* Validation message */
+        /* ─── Validation message ─── */
         .validation-message {
             display: none;
             margin-top: 8px;
@@ -325,12 +290,10 @@
             font-weight: 500;
             align-items: center;
             gap: 8px;
-            animation: slideDown 0.3s ease;
+            animation: slideDown 0.25s ease;
         }
 
-        .validation-message.show {
-            display: flex;
-        }
+        .validation-message.show { display: flex; }
 
         .validation-message.error {
             background: #FEF2F2;
@@ -344,32 +307,25 @@
             border-left: 3px solid var(--success-green);
         }
 
-        .validation-message.warning {
-            background: #FFFBEB;
-            color: var(--warning-yellow);
-            border-left: 3px solid var(--warning-yellow);
-        }
-
-        .validation-message svg {
-            width: 16px;
-            height: 16px;
-            flex-shrink: 0;
-        }
+        .validation-message svg { width: 16px; height: 16px; flex-shrink: 0; }
 
         @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-8px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(-8px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
 
-        /* ══════════════════════════════════════════════════════════════════════════════
-           BUTTON & INTERACTIVE ELEMENTS
-        ══════════════════════════════════════════════════════════════════════════════ */
+        /* ─── Shake animation on submit error ─── */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%       { transform: translateX(-6px); }
+            40%       { transform: translateX(6px); }
+            60%       { transform: translateX(-4px); }
+            80%       { transform: translateX(4px); }
+        }
+
+        .input-group.shake input { animation: shake 0.4s ease; }
+
+        /* ─── Button ─── */
         .btn-login {
             width: 100%;
             padding: 16px;
@@ -400,50 +356,32 @@
             transition: left 0.5s;
         }
 
-        .btn-login:hover:not(:disabled)::before {
-            left: 100%;
-        }
+        .btn-login:hover:not(:disabled)::before { left: 100%; }
 
         .btn-login:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 10px 32px rgba(196, 30, 58, 0.4);
         }
 
-        .btn-login:active:not(:disabled) {
-            transform: translateY(0);
-        }
+        .btn-login:active:not(:disabled) { transform: translateY(0); }
+        .btn-login:disabled { opacity: 0.7; cursor: not-allowed; }
+        .btn-login.loading { pointer-events: none; }
 
-        .btn-login:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-        }
-
-        .btn-login.loading {
-            pointer-events: none;
-        }
-
-        .btn-login.loading::after {
-            content: '';
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            top: 50%;
-            left: 50%;
-            margin-left: -10px;
-            margin-top: -10px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
+        .btn-login.loading .btn-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2.5px solid rgba(255,255,255,0.35);
+            border-top-color: #fff;
             border-radius: 50%;
-            border-top-color: var(--white);
-            animation: spin 0.8s linear infinite;
+            animation: spin 0.7s linear infinite;
+            vertical-align: middle;
+            margin-right: 8px;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* ══════════════════════════════════════════════════════════════════════════════
-           LOGO DISPLAY SECTION
-        ══════════════════════════════════════════════════════════════════════════════ */
+        /* ─── Divider & logos ─── */
         .divider {
             display: flex;
             align-items: center;
@@ -494,129 +432,47 @@
             border-color: var(--red-light);
         }
 
-        .logo-mark img {
-            width: 52px;
-            height: 52px;
-            object-fit: contain;
-        }
+        .logo-mark img { width: 52px; height: 52px; object-fit: contain; }
 
-        /* ══════════════════════════════════════════════════════════════════════════════
-           ANIMATIONS
-        ══════════════════════════════════════════════════════════════════════════════ */
         @keyframes fadeUp {
-            from {
-                opacity: 0;
-                transform: translateY(24px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(24px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
 
-        /* ══════════════════════════════════════════════════════════════════════════════
-           RESPONSIVE DESIGN
-        ══════════════════════════════════════════════════════════════════════════════ */
-        @media (max-width: 1024px) {
-            .right-panel {
-                flex: 0 0 440px;
-            }
-        }
+        /* ─── Responsive ─── */
+        @media (max-width: 1024px) { .right-panel { flex: 0 0 440px; } }
 
         @media (max-width: 900px) {
-            body {
-                flex-direction: column;
-                overflow: auto;
-            }
-
-            .left-panel {
-                flex: none;
-                height: 40vh;
-                min-height: 300px;
-            }
-
-            .left-content {
-                padding: 40px;
-                max-width: 100%;
-            }
-
-            .left-content h1 {
-                font-size: 2.2rem;
-            }
-
-            .tag {
-                bottom: 24px;
-                left: 40px;
-            }
-
-            .right-panel {
-                flex: none;
-                width: 100%;
-                padding: 50px 32px;
-            }
+            body { flex-direction: column; overflow: auto; }
+            .left-panel { flex: none; height: 40vh; min-height: 300px; }
+            .left-content { padding: 40px; max-width: 100%; }
+            .left-content h1 { font-size: 2.2rem; }
+            .tag { bottom: 24px; left: 40px; }
+            .right-panel { flex: none; width: 100%; padding: 50px 32px; }
         }
 
         @media (max-width: 600px) {
-            .left-panel {
-                height: 32vh;
-                min-height: 240px;
-            }
-
-            .left-content {
-                padding: 32px 24px;
-            }
-
-            .left-content h1 {
-                font-size: 1.8rem;
-            }
-
-            .left-content p {
-                font-size: 0.92rem;
-            }
-
-            .right-panel {
-                padding: 40px 24px;
-            }
-
-            .form-wrapper {
-                max-width: 100%;
-            }
-
-            .form-header h2 {
-                font-size: 1.7rem;
-            }
-
-            .logo-container {
-                gap: 12px;
-            }
-
-            .logo-mark {
-                width: 64px;
-                height: 64px;
-            }
-
-            .logo-mark img {
-                width: 44px;
-                height: 44px;
-            }
+            .left-panel { height: 32vh; min-height: 240px; }
+            .left-content { padding: 32px 24px; }
+            .left-content h1 { font-size: 1.8rem; }
+            .left-content p { font-size: 0.92rem; }
+            .right-panel { padding: 40px 24px; }
+            .form-wrapper { max-width: 100%; }
+            .form-header h2 { font-size: 1.7rem; }
+            .logo-container { gap: 12px; }
+            .logo-mark { width: 64px; height: 64px; }
+            .logo-mark img { width: 44px; height: 44px; }
         }
 
         @media (max-width: 400px) {
-            .left-content p {
-                display: none;
-            }
-
-            .tag {
-                font-size: 0.7rem;
-            }
+            .left-content p { display: none; }
+            .tag { font-size: 0.7rem; }
         }
     </style>
 </head>
 
 <body>
-    <!-- ══════════════════════════════════════════════════════════════════════════════
-         LEFT PANEL - VISUAL DESIGN
-    ══════════════════════════════════════════════════════════════════════════════ -->
+    <!-- LEFT PANEL -->
     <div class="left-panel">
         <div class="circle"></div>
         <div class="circle"></div>
@@ -631,9 +487,7 @@
         </div>
     </div>
 
-    <!-- ══════════════════════════════════════════════════════════════════════════════
-         RIGHT PANEL - LOGIN FORM
-    ══════════════════════════════════════════════════════════════════════════════ -->
+    <!-- RIGHT PANEL -->
     <div class="right-panel">
         <div class="form-wrapper">
             <div class="form-header">
@@ -641,10 +495,10 @@
                 <p>Masukkan kredensial Anda untuk melanjutkan</p>
             </div>
 
-            <form id="loginForm">
+            <form id="loginForm" novalidate>
                 @csrf
-                
-                <!-- Username Input -->
+
+                <!-- Username -->
                 <div class="input-group" id="usernameGroup">
                     <label for="usernameInput">Username</label>
                     <div class="input-wrap">
@@ -652,11 +506,11 @@
                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                             <circle cx="12" cy="7" r="4"></circle>
                         </svg>
-                        <input 
-                            type="text" 
-                            id="usernameInput" 
+                        <input
+                            type="text"
+                            id="usernameInput"
                             name="username"
-                            placeholder="Masukkan username Anda" 
+                            placeholder="Masukkan username Anda"
                             autocomplete="username"
                             maxlength="50"
                         >
@@ -671,7 +525,7 @@
                     </div>
                 </div>
 
-                <!-- Password Input -->
+                <!-- Password -->
                 <div class="input-group" id="passwordGroup">
                     <label for="passwordInput">Kata Sandi</label>
                     <div class="input-wrap">
@@ -679,11 +533,11 @@
                             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                             <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                         </svg>
-                        <input 
-                            type="password" 
-                            id="passwordInput" 
+                        <input
+                            type="password"
+                            id="passwordInput"
                             name="password"
-                            placeholder="Masukkan kata sandi Anda" 
+                            placeholder="Masukkan kata sandi Anda"
                             autocomplete="current-password"
                             maxlength="100"
                         >
@@ -699,6 +553,7 @@
                 </div>
 
                 <button type="submit" class="btn-login" id="loginBtn">
+                    <span class="btn-spinner" id="btnSpinner" style="display:none;"></span>
                     <span id="btnText">Masuk</span>
                 </button>
             </form>
@@ -707,7 +562,6 @@
                 <span>Partner Sistem</span>
             </div>
 
-            <!-- Logo Section -->
             <div class="logo-container">
                 <div class="logo-mark">
                     <img src="{{ asset('assets/assets/img/favicon/icon.png') }}" alt="Logo Koperasi">
@@ -722,285 +576,255 @@
         </div>
     </div>
 
-    <!-- ══════════════════════════════════════════════════════════════════════════════
-         SCRIPTS
-    ══════════════════════════════════════════════════════════════════════════════ -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
+
     <script>
-        $(document).ready(function() {
-            // ═══════════════════════════════════════════════════════════════════════
-            // CSRF TOKEN SETUP
-            // ═══════════════════════════════════════════════════════════════════════
+        $(document).ready(function () {
+
             $.ajaxSetup({
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                }
+                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }
             });
 
             // ═══════════════════════════════════════════════════════════════════════
-            // VALIDATION HELPER FUNCTIONS
+            // VALIDATION RULES
             // ═══════════════════════════════════════════════════════════════════════
-            const ValidationHelper = {
-                // Show error message
-                showError: function(groupId, message) {
-                    const $group = $(`#${groupId}`);
-                    const $errorMsg = $group.find('.validation-message');
-                    
-                    $group.removeClass('success').addClass('error');
-                    $errorMsg.removeClass('success warning').addClass('error show');
-                    $errorMsg.find('span').text(message);
+            const Rules = {
+                username: function (val) {
+                    if (!val || val.trim() === '')
+                        return 'Username wajib diisi';
+                    if (val.trim().length < 3)
+                        return 'Username minimal 3 karakter';
+                    if (val.trim().length > 50)
+                        return 'Username maksimal 50 karakter';
+                    if (!/^[a-zA-Z0-9._-]+$/.test(val.trim()))
+                        return 'Username hanya boleh mengandung huruf, angka, titik, garis bawah, dan strip';
+                    return null; // null = valid
                 },
-
-                // Show success message
-                showSuccess: function(groupId) {
-                    const $group = $(`#${groupId}`);
-                    const $errorMsg = $group.find('.validation-message');
-                    
-                    $group.removeClass('error').addClass('success');
-                    $errorMsg.removeClass('show'); // Hide message for success
-                },
-
-                // Clear validation state
-                clearValidation: function(groupId) {
-                    const $group = $(`#${groupId}`);
-                    const $errorMsg = $group.find('.validation-message');
-                    
-                    $group.removeClass('error success');
-                    $errorMsg.removeClass('error success warning show');
-                },
-
-                // Clear all validations
-                clearAll: function() {
-                    this.clearValidation('usernameGroup');
-                    this.clearValidation('passwordGroup');
-                },
-
-                // Validate username
-                validateUsername: function(username) {
-                    if (!username || username.trim() === '') {
-                        return { valid: false, message: 'Username tidak boleh kosong' };
-                    }
-                    
-                    if (username.length < 3) {
-                        return { valid: false, message: 'Username minimal 3 karakter' };
-                    }
-                    
-                    if (username.length > 50) {
-                        return { valid: false, message: 'Username maksimal 50 karakter' };
-                    }
-                    
-                    // Only allow alphanumeric, underscore, dash, and dot
-                    const usernamePattern = /^[a-zA-Z0-9._-]+$/;
-                    if (!usernamePattern.test(username)) {
-                        return { valid: false, message: 'Username hanya boleh mengandung huruf, angka, titik, garis bawah, dan strip' };
-                    }
-                    
-                    return { valid: true, message: '' };
-                },
-
-                // Validate password
-                validatePassword: function(password) {
-                    if (!password || password.trim() === '') {
-                        return { valid: false, message: 'Kata sandi tidak boleh kosong' };
-                    }
-                    
-                    if (password.length < 6) {
-                        return { valid: false, message: 'Kata sandi minimal 6 karakter' };
-                    }
-                    
-                    if (password.length > 100) {
-                        return { valid: false, message: 'Kata sandi terlalu panjang' };
-                    }
-                    
-                    return { valid: true, message: '' };
+                password: function (val) {
+                    if (!val || val.length === 0)
+                        return 'Kata sandi wajib diisi';
+                    if (val.length < 6)
+                        return 'Kata sandi minimal 6 karakter';
+                    if (val.length > 100)
+                        return 'Kata sandi terlalu panjang';
+                    return null;
                 }
             };
 
             // ═══════════════════════════════════════════════════════════════════════
-            // REAL-TIME VALIDATION ON INPUT
+            // UI HELPERS
             // ═══════════════════════════════════════════════════════════════════════
+            const UI = {
+                /**
+                 * Show inline error for a field group.
+                 * @param {string} groupId  – e.g. 'usernameGroup'
+                 * @param {string} message  – error text
+                 * @param {boolean} shake   – trigger shake animation
+                 */
+                showError: function (groupId, message, shake) {
+                    const $group = $('#' + groupId);
+                    const $msg   = $group.find('.validation-message');
+
+                    $group.removeClass('success').addClass('error');
+                    $msg.removeClass('success show').addClass('error show');
+                    $msg.find('span').text(message);
+
+                    if (shake) {
+                        // Re-trigger animation by removing then re-adding class
+                        $group.removeClass('shake');
+                        void $group[0].offsetWidth; // force reflow
+                        $group.addClass('shake');
+                        setTimeout(function () { $group.removeClass('shake'); }, 450);
+                    }
+                },
+
+                /** Mark field as valid (green border, hide message). */
+                showSuccess: function (groupId) {
+                    const $group = $('#' + groupId);
+                    const $msg   = $group.find('.validation-message');
+
+                    $group.removeClass('error').addClass('success');
+                    $msg.removeClass('error show');
+                },
+
+                /** Remove all validation styling. */
+                clear: function (groupId) {
+                    const $group = $('#' + groupId);
+                    $group.removeClass('error success shake');
+                    $group.find('.validation-message').removeClass('error success show');
+                },
+
+                clearAll: function () {
+                    this.clear('usernameGroup');
+                    this.clear('passwordGroup');
+                }
+            };
+
+            // ═══════════════════════════════════════════════════════════════════════
+            // REAL-TIME VALIDATION (only after first blur, or after failed submit)
+            // ═══════════════════════════════════════════════════════════════════════
+            // We track which fields have been "touched" (blurred at least once)
+            // so we don't annoy users before they've had a chance to type.
+            const touched = { username: false, password: false };
+
+            // Mark field as touched on blur, then validate immediately
+            $('#usernameInput').on('blur', function () {
+                touched.username = true;
+                const err = Rules.username($(this).val());
+                err ? UI.showError('usernameGroup', err, false)
+                    : UI.showSuccess('usernameGroup');
+            });
+
+            $('#passwordInput').on('blur', function () {
+                touched.password = true;
+                const err = Rules.password($(this).val());
+                err ? UI.showError('passwordGroup', err, false)
+                    : UI.showSuccess('passwordGroup');
+            });
+
+            // Live validation while typing — ONLY if already touched
             let usernameTimer, passwordTimer;
 
-            $('#usernameInput').on('input', function() {
+            $('#usernameInput').on('input', function () {
+                if (!touched.username) return;
                 clearTimeout(usernameTimer);
-                const username = $(this).val().trim();
-                
-                // Clear validation if empty
-                if (username === '') {
-                    ValidationHelper.clearValidation('usernameGroup');
-                    return;
-                }
-                
-                // Debounce validation
-                usernameTimer = setTimeout(function() {
-                    const validation = ValidationHelper.validateUsername(username);
-                    if (!validation.valid) {
-                        ValidationHelper.showError('usernameGroup', validation.message);
-                    } else {
-                        ValidationHelper.showSuccess('usernameGroup');
-                    }
-                }, 500);
+                const val = $(this).val();
+                usernameTimer = setTimeout(function () {
+                    const err = Rules.username(val);
+                    err ? UI.showError('usernameGroup', err, false)
+                        : UI.showSuccess('usernameGroup');
+                }, 300);
             });
 
-            $('#passwordInput').on('input', function() {
+            $('#passwordInput').on('input', function () {
+                if (!touched.password) return;
                 clearTimeout(passwordTimer);
-                const password = $(this).val();
-                
-                // Clear validation if empty
-                if (password === '') {
-                    ValidationHelper.clearValidation('passwordGroup');
-                    return;
-                }
-                
-                // Debounce validation
-                passwordTimer = setTimeout(function() {
-                    const validation = ValidationHelper.validatePassword(password);
-                    if (!validation.valid) {
-                        ValidationHelper.showError('passwordGroup', validation.message);
-                    } else {
-                        ValidationHelper.showSuccess('passwordGroup');
-                    }
-                }, 500);
+                const val = $(this).val();
+                passwordTimer = setTimeout(function () {
+                    const err = Rules.password(val);
+                    err ? UI.showError('passwordGroup', err, false)
+                        : UI.showSuccess('passwordGroup');
+                }, 300);
             });
 
             // ═══════════════════════════════════════════════════════════════════════
-            // FORM SUBMISSION HANDLER
+            // FORM SUBMIT
             // ═══════════════════════════════════════════════════════════════════════
-            $('#loginForm').on('submit', function(e) {
+            $('#loginForm').on('submit', function (e) {
                 e.preventDefault();
-                
-                // Get values
-                const username = $('#usernameInput').val().trim();
+
+                const username = $('#usernameInput').val();
                 const password = $('#passwordInput').val();
-                const $btn = $('#loginBtn');
-                const $btnText = $('#btnText');
 
-                // Clear previous validations
-                ValidationHelper.clearAll();
+                // Mark both as touched so live-validation activates afterward
+                touched.username = true;
+                touched.password = true;
 
-                // Validate username
-                const usernameValidation = ValidationHelper.validateUsername(username);
-                if (!usernameValidation.valid) {
-                    ValidationHelper.showError('usernameGroup', usernameValidation.message);
-                    $('#usernameInput').focus();
+                // Validate both fields
+                const usernameErr = Rules.username(username);
+                const passwordErr = Rules.password(password);
+
+                let firstErrorId = null;
+
+                if (usernameErr) {
+                    UI.showError('usernameGroup', usernameErr, true);
+                    if (!firstErrorId) firstErrorId = 'usernameInput';
+                } else {
+                    UI.showSuccess('usernameGroup');
+                }
+
+                if (passwordErr) {
+                    UI.showError('passwordGroup', passwordErr, true);
+                    if (!firstErrorId) firstErrorId = 'passwordInput';
+                } else {
+                    UI.showSuccess('passwordGroup');
+                }
+
+                // Stop here if there are errors
+                if (firstErrorId) {
+                    $('#' + firstErrorId).focus();
                     return;
                 }
 
-                // Validate password
-                const passwordValidation = ValidationHelper.validatePassword(password);
-                if (!passwordValidation.valid) {
-                    ValidationHelper.showError('passwordGroup', passwordValidation.message);
-                    $('#passwordInput').focus();
-                    return;
-                }
+                // ── Loading state ──
+                const $btn     = $('#loginBtn');
+                const $spinner = $('#btnSpinner');
+                const $text    = $('#btnText');
 
-                // Show loading state
                 $btn.prop('disabled', true).addClass('loading');
-                $btnText.text('Memproses...');
+                $spinner.show();
+                $text.text('Memproses...');
 
-                // Execute AJAX request
+                // ── AJAX ──
                 $.ajax({
                     url: '/login-proses',
                     method: 'POST',
-                    data: JSON.stringify({
-                        username: username,
-                        password: password
-                    }),
+                    data: JSON.stringify({ username: username.trim(), password: password }),
                     contentType: 'application/json',
                     dataType: 'json',
-                    timeout: 30000, // 30 seconds timeout
-                    
-                    success: function(response) {
-                        // Show success notification
+                    timeout: 30000,
+
+                    success: function (response) {
                         Swal.fire({
                             icon: 'success',
                             title: 'Login Berhasil!',
                             text: 'Selamat datang kembali. Anda akan diarahkan ke dashboard...',
                             showConfirmButton: false,
                             timer: 2000,
-                            timerProgressBar: true,
-                            customClass: {
-                                popup: 'swal-custom'
-                            }
-                        }).then(() => {
-                            // Redirect to dashboard
+                            timerProgressBar: true
+                        }).then(function () {
                             window.location.href = response.redirect || '/';
                         });
                     },
-                    
-                    error: function(xhr, status, error) {
-                        // Reset button state
+
+                    error: function (xhr, status) {
+                        // Reset button
                         $btn.prop('disabled', false).removeClass('loading');
-                        $btnText.text('Masuk');
+                        $spinner.hide();
+                        $text.text('Masuk');
 
-                        let errorTitle = 'Login Gagal';
-                        let errorMsg = 'Terjadi kesalahan saat login. Silakan coba lagi.';
+                        let title = 'Login Gagal';
+                        let msg   = 'Terjadi kesalahan. Silakan coba lagi.';
 
-                        // Handle different error scenarios
                         if (status === 'timeout') {
-                            errorMsg = 'Koneksi timeout. Periksa koneksi internet Anda dan coba lagi.';
+                            msg = 'Koneksi timeout. Periksa koneksi internet Anda dan coba lagi.';
                         } else if (xhr.status === 401 || xhr.status === 422) {
-                            errorTitle = 'Kredensial Tidak Valid';
-                            errorMsg = 'Username atau kata sandi yang Anda masukkan salah. Silakan periksa kembali.';
-                            
-                            // Show validation errors
-                            ValidationHelper.showError('usernameGroup', 'Username atau kata sandi salah');
-                            ValidationHelper.showError('passwordGroup', 'Username atau kata sandi salah');
+                            title = 'Kredensial Tidak Valid';
+                            msg   = 'Username atau kata sandi yang Anda masukkan salah.';
+                            UI.showError('usernameGroup', 'Username atau kata sandi salah', true);
+                            UI.showError('passwordGroup', 'Username atau kata sandi salah', true);
                         } else if (xhr.status === 429) {
-                            errorMsg = 'Terlalu banyak percobaan login. Silakan tunggu beberapa saat.';
+                            msg = 'Terlalu banyak percobaan login. Silakan tunggu beberapa saat.';
                         } else if (xhr.status === 500) {
-                            errorMsg = 'Terjadi kesalahan pada server. Silakan hubungi administrator.';
+                            msg = 'Terjadi kesalahan pada server. Silakan hubungi administrator.';
                         } else if (xhr.responseJSON && xhr.responseJSON.message) {
-                            errorMsg = xhr.responseJSON.message;
+                            msg = xhr.responseJSON.message;
                         }
 
-                        // Show error notification
                         Swal.fire({
                             icon: 'error',
-                            title: errorTitle,
-                            text: errorMsg,
+                            title: title,
+                            text: msg,
                             confirmButtonColor: '#C41E3A',
-                            confirmButtonText: 'Coba Lagi',
-                            customClass: {
-                                popup: 'swal-custom'
-                            }
+                            confirmButtonText: 'Coba Lagi'
                         });
                     }
                 });
             });
 
-            // ═══════════════════════════════════════════════════════════════════════
-            // ADDITIONAL FEATURES
-            // ═══════════════════════════════════════════════════════════════════════
-            
-            // Press Enter to submit
-            $('#usernameInput, #passwordInput').on('keypress', function(e) {
-                if (e.which === 13) {
-                    $('#loginForm').submit();
-                }
+            // Enter key shortcut
+            $('#usernameInput, #passwordInput').on('keypress', function (e) {
+                if (e.which === 13) $('#loginForm').submit();
             });
 
-            // Clear validation on focus
-            $('#usernameInput').on('focus', function() {
-                if ($(this).val().trim() !== '') return;
-                ValidationHelper.clearValidation('usernameGroup');
-            });
-
-            $('#passwordInput').on('focus', function() {
-                if ($(this).val() !== '') return;
-                ValidationHelper.clearValidation('passwordGroup');
-            });
-
-            // Prevent XSS in input fields
-            $('#usernameInput, #passwordInput').on('paste', function(e) {
-                setTimeout(() => {
-                    const val = $(this).val();
-                    // Remove any HTML tags
-                    const cleaned = val.replace(/<[^>]*>/g, '');
-                    if (val !== cleaned) {
-                        $(this).val(cleaned);
+            // Sanitize paste (strip HTML tags)
+            $('#usernameInput, #passwordInput').on('paste', function () {
+                const $el = $(this);
+                setTimeout(function () {
+                    const cleaned = $el.val().replace(/<[^>]*>/g, '');
+                    if (cleaned !== $el.val()) {
+                        $el.val(cleaned);
                         Swal.fire({
                             icon: 'warning',
                             title: 'Perhatian',
@@ -1014,15 +838,9 @@
         });
     </script>
 
-    <!-- Custom SweetAlert2 Styles -->
     <style>
-        .swal-custom {
-            font-family: 'DM Sans', sans-serif !important;
-        }
-        
-        .swal2-timer-progress-bar {
-            background: var(--red-main) !important;
-        }
+        .swal-custom { font-family: 'DM Sans', sans-serif !important; }
+        .swal2-timer-progress-bar { background: var(--red-main) !important; }
     </style>
 </body>
 

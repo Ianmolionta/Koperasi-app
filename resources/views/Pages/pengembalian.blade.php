@@ -76,7 +76,7 @@
                                 <div class="col-md-6">
                                     <div class="info-card info-card-white">
                                         <div class="info-card-icon">
-                                            <i class="bx bx-money-withdraw"></i>
+                                            <i class="bx bx-money"></i>
                                         </div>
                                         <div class="info-card-content">
                                             <small class="info-card-label">Sisa Pinjaman</small>

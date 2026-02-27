@@ -54,26 +54,39 @@ class PeminjamanRepositories implements PeminjamanInterface
             }
 
             /**
-             * 3. PENENTUAN LIMIT BERJALAN (LOGIC FIX)
-             * Kita pastikan mengambil data TERAKHIR dari histori_limits 
-             * karena di situlah angka 55 juta (kenaikan 10%) disimpan.
+             * 3. PENENTUAN LIMIT BERJALAN (RESET LOGIC)
+             * Kita bandingkan Limit Awal di tb_limit dengan Histori Terakhir.
              */
-            $limitBerjalan = 0;
 
-            // Ambil histori limit terbaru berdasarkan ID terbesar atau created_at terbaru
+            // A. Ambil Limit Awal dari tb_limit (Ini referensi 10jt Anda)
+            $limitAwalData = DB::table('tb_limit')
+                ->where('umkm_id', $umkm->id)
+                ->first();
+
+            if (!$limitAwalData) {
+                throw new \Exception('Data limit awal UMKM tidak ditemukan di tb_limit.');
+            }
+
+            $limitAwal = (float) $limitAwalData->limit; // Nilai asli (misal: 10jt)
+
+            // B. Ambil Histori Terbaru
             $historiTerbaru = DB::table('tb_histori_limit')
                 ->where('umkm_id', $umkm->id)
                 ->orderBy('id', 'desc')
                 ->first();
 
+            /**
+             * C. LOGIKA RESET:
+             * Jika tidak ada histori, pakai Limit Awal.
+             * Jika ada histori, ambil yang TERBESAR antara Histori vs Limit Awal.
+             * Ini akan me-reset otomatis jika histori berisi 5jt sedangkan limit awal 10jt.
+             */
             if ($historiTerbaru) {
-                // Jika ada histori (Misal: 55.000.000), gunakan ini
-                $limitBerjalan = (float) $historiTerbaru->limit_baru;
-            } elseif ($umkm->limit) {
-                // Jika belum pernah ada histori, pakai limit master (Misal: 50.000.000)
-                $limitBerjalan = (float) $umkm->limit->limit;
+                $limitHistori = (float) $historiTerbaru->limit_baru;
+                // Gunakan fungsi max() untuk mengambil angka tertinggi
+                $limitBerjalan = max($limitAwal, $limitHistori);
             } else {
-                throw new \Exception('Data limit master UMKM tidak ditemukan.');
+                $limitBerjalan = $limitAwal;
             }
 
             // 4. Validasi input
@@ -101,7 +114,15 @@ class PeminjamanRepositories implements PeminjamanInterface
             $data->jumlah_pinjaman = $jumlahPinjaman;
             $data->sisa_pinjaman = $totalPinjaman;
             $data->tanggal_pengajuan = now();
-            $data->status = 'pending';
+            // tanggal disetujui = sekarang
+            $tanggalDisetujui = Carbon::now();
+
+            // batas pengembalian = 4 bulan setelah disetujui
+            $batasPengembalian = $tanggalDisetujui->copy()->addMonths(4);
+
+            $data->tanggal_disetujui = $tanggalDisetujui;
+            $data->batas_pengembalian = $batasPengembalian;
+            $data->status = 'disetujui';
             $data->catatan = $request->catatan;
             $data->save();
 
@@ -176,26 +197,42 @@ class PeminjamanRepositories implements PeminjamanInterface
             return response()->json(['message' => 'Data tidak ditemukan'], 404);
         }
 
-        // Ambil histori limit terakhir dengan pengurutan ID yang jelas
+        // Ambil histori limit terakhir
         $latestHistori = $umkm->historiLimit()
-            ->orderBy('id', 'desc') // Memastikan baris terakhir database yang diambil
+            ->orderBy('id', 'desc')
             ->first();
 
-        // Logic penentuan limit aktif
-        $limitAktif = 0;
-        if ($latestHistori) {
-            $limitAktif = $latestHistori->limit_baru;
-        } elseif ($umkm->limit) {
-            $limitAktif = $umkm->limit->limit;
-        }
+        // Limit "master" = limit dasar dari tabel limit UMKM
+        $limitMaster = $umkm->limit->limit ?? 0;
+
+        // Limit "base" saat ini = dari histori (bisa naik/turun karena kebijakan koperasi)
+        // Jika belum ada histori, pakai limit master
+        $limitBase = $latestHistori ? $latestHistori->limit_baru : $limitMaster;
+
+        // ─────────────────────────────────────────────────────────────────────────
+        // PERBAIKAN UTAMA:
+        // Hitung total pinjaman yang SEDANG AKTIF (belum lunas / belum ditolak).
+        // Status yang mengurangi limit: pending, disetujui, berjalan
+        // Status yang TIDAK mengurangi limit: lunas (uang kembali), ditolak (tidak jadi)
+        // ─────────────────────────────────────────────────────────────────────────
+        $statusAktif = ['pending', 'disetujui', 'berjalan'];
+
+        $totalPinjamanAktif = PeminjamanModel::where('umkm_id', $id)
+            ->whereIn('status', $statusAktif)
+            ->sum('jumlah_pinjaman');
+
+        // Limit efektif = limit base dikurangi pinjaman yang benar-benar sedang berjalan
+        $limitEfektif = max($limitBase - $totalPinjamanAktif, 0);
 
         return response()->json([
             'data' => [
-                'id' => $umkm->id,
-                'nama_umkm' => $umkm->nama,
-                'limit_master' => $umkm->limit->limit ?? 0,
-                'limit_saat_ini' => (int) $limitAktif,
-                'histori_terakhir' => $latestHistori // Sertakan ini untuk pengecekan di FE
+                'id'             => $umkm->id,
+                'nama_umkm'      => $umkm->nama,
+                'limit_master'   => (int) $limitMaster,
+                'limit_base'     => (int) $limitBase,       // limit dari histori (sebelum dikurangi pinjaman aktif)
+                'limit_saat_ini' => (int) $limitEfektif,    // limit yang benar-benar bisa dipakai sekarang
+                'total_pinjaman_aktif' => (int) $totalPinjamanAktif, // untuk transparansi / debugging
+                'histori_terakhir' => $latestHistori,
             ]
         ]);
     }
